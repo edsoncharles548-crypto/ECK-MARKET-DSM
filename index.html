@@ -1,0 +1,1215 @@
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>ECK MARKET DSM</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --ink:#182339;
+    --navy:#1B2A4A;
+    --gold:#F5A623;
+    --green:#1F9D55;
+    --coral:#E8542A;
+    --paper:#FAF8F1;
+    --card:#FFFFFF;
+    --line:#E7E0D1;
+    --muted:#6B7280;
+    --nguo:#D6336C;
+    --viatu:#A0632C;
+    --simu:#2563EB;
+    --tv:#7C3AED;
+    --mix:#0E9488;
+    --moto:#B8420F;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    font-family:'Inter',sans-serif;
+    background:var(--paper);
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+    padding-bottom:90px;
+  }
+  h1,h2,h3,.brand,.stall-title{font-family:'Baloo 2',sans-serif;}
+
+  /* ---- Top bar ---- */
+  header{
+    background:var(--navy);
+    color:#fff;
+    padding:14px 18px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    position:sticky; top:0; z-index:40;
+    box-shadow:0 2px 10px rgba(0,0,0,.15);
+  }
+  .brand{font-size:20px; font-weight:800; letter-spacing:.3px; display:flex; align-items:center; gap:8px;}
+  .brand .dot{width:9px; height:9px; border-radius:50%; background:var(--gold); display:inline-block;}
+  .lang-switch{display:flex; gap:4px; background:rgba(255,255,255,.08); padding:4px; border-radius:10px;}
+  .lang-switch button{
+    background:transparent; border:none; color:#cfd7e6; font-size:12px; font-weight:700;
+    padding:6px 9px; border-radius:7px; cursor:pointer; font-family:'Inter',sans-serif;
+  }
+  .lang-switch button.active{background:var(--gold); color:var(--navy);}
+
+  /* ---- Hero ---- */
+  .hero{
+    padding:34px 20px 28px;
+    background:
+      radial-gradient(circle at 85% -10%, rgba(245,166,35,.35), transparent 55%),
+      radial-gradient(circle at -10% 110%, rgba(31,157,85,.25), transparent 50%),
+      var(--navy);
+    color:#fff;
+  }
+  .hero .eyebrow{
+    color:var(--gold); font-weight:700; font-size:12.5px; letter-spacing:1.5px; text-transform:uppercase;
+  }
+  .hero h1{font-size:30px; line-height:1.15; margin:8px 0 10px; font-weight:800;}
+  .hero p{color:#cfd7e6; font-size:14.5px; line-height:1.5; max-width:46ch;}
+  .hero-actions{display:flex; gap:10px; margin-top:18px; flex-wrap:wrap;}
+  .btn{
+    border:none; border-radius:12px; padding:12px 18px; font-weight:700; font-size:14px;
+    cursor:pointer; font-family:'Inter',sans-serif;
+  }
+  .btn-primary{background:var(--gold); color:var(--navy);}
+  .btn-ghost{background:rgba(255,255,255,.12); color:#fff; border:1px solid rgba(255,255,255,.3);}
+
+  /* ---- Section ---- */
+  section{padding:26px 18px;}
+  .section-head{display:flex; align-items:baseline; justify-content:space-between; margin-bottom:14px;}
+  .section-head h2{font-size:19px; font-weight:700;}
+  .section-head span{font-size:12.5px; color:var(--muted);}
+
+  /* ---- Category stalls ---- */
+  .stalls{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+  .stall{
+    border-radius:16px; padding:16px 14px; cursor:pointer; position:relative; overflow:hidden;
+    color:#fff; min-height:104px; display:flex; flex-direction:column; justify-content:flex-end;
+    border:none; text-align:left; font-family:'Inter',sans-serif;
+    transition:transform .15s ease;
+  }
+  .stall:active{transform:scale(.97);}
+  .stall::before{
+    content:''; position:absolute; inset:0; opacity:.18;
+    background:repeating-linear-gradient(135deg, #fff 0 2px, transparent 2px 14px);
+  }
+  .stall[data-cat="nguo"]{background:linear-gradient(135deg,#D6336C,#A02454);}
+  .stall[data-cat="viatu"]{background:linear-gradient(135deg,#A0632C,#6E4319);}
+  .stall[data-cat="simu"]{background:linear-gradient(135deg,#2563EB,#1739A0);}
+  .stall[data-cat="tv-spea"]{background:linear-gradient(135deg,#7C3AED,#4C1FA0);}
+  .stall[data-cat="mix"]{background:linear-gradient(135deg,#0E9488,#0A6960);}
+  .stall[data-cat="baiskeli-pikipiki"]{background:linear-gradient(135deg,#B8420F,#7A2B08);}
+  .stall.active{outline:3px solid var(--gold); outline-offset:2px;}
+  .stall-title{font-size:16.5px; font-weight:700; position:relative;}
+  .stall-icon{font-size:22px; margin-bottom:4px; position:relative;}
+  .stall-count{font-size:11.5px; opacity:.85; position:relative; margin-top:2px;}
+
+  /* ---- Vendor cards ---- */
+  .vendor-card{
+    background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px;
+    margin-bottom:12px;
+  }
+  .vendor-card .v-top{display:flex; align-items:center; justify-content:space-between;}
+  .vendor-card .v-name{font-weight:700; font-size:15px;}
+  .vendor-card .v-tag{
+    font-size:10.5px; font-weight:700; padding:3px 8px; border-radius:99px; color:#fff;
+  }
+  .products-row{display:flex; gap:10px; overflow-x:auto; margin-top:10px; padding-bottom:4px;}
+  .product{
+    min-width:118px; background:var(--paper); border:1px solid var(--line); border-radius:12px; padding:8px; flex-shrink:0;
+  }
+  .product .ph{
+    width:100%; height:70px; border-radius:8px; background:linear-gradient(135deg,#eee,#ddd);
+    display:flex; align-items:center; justify-content:center; font-size:22px; margin-bottom:6px;
+  }
+  .product .p-name{font-size:12.5px; font-weight:600; line-height:1.25;}
+  .product .p-price{font-size:12.5px; font-weight:700; color:var(--green); margin-top:2px;}
+  .buy-btn{
+    width:100%; margin-top:7px; border:none; border-radius:8px; padding:7px 0;
+    background:var(--coral); color:#fff; font-size:11.5px; font-weight:700; cursor:pointer;
+    font-family:'Inter',sans-serif;
+  }
+  .order-confirm{text-align:center; padding:6px 4px 2px;}
+  .order-confirm .big{font-size:40px; margin-bottom:8px;}
+  .order-confirm h4{font-size:17px; margin-bottom:6px;}
+  .order-confirm p{font-size:13px; color:var(--muted); line-height:1.6; margin-bottom:14px;}
+  .vendor-contact{
+    background:var(--paper); border:1px solid var(--line); border-radius:12px; padding:14px;
+    text-align:left; margin-bottom:16px;
+  }
+  .vendor-contact .vc-label{font-size:11px; color:var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:.5px;}
+  .vendor-contact .vc-phone{font-size:18px; font-weight:800; color:var(--navy); margin-top:3px; font-family:'Baloo 2',sans-serif;}
+  .contact-actions{display:flex; gap:10px;}
+  .contact-actions a{flex:1; text-decoration:none;}
+
+  .empty{
+    text-align:center; padding:34px 16px; color:var(--muted); font-size:13.5px; line-height:1.6;
+  }
+  .empty .big{font-size:34px; margin-bottom:6px;}
+
+  /* ---- Stats bar ---- */
+  .stats-bar{
+    display:grid; grid-template-columns:repeat(3,1fr); background:#fff; border-bottom:1px solid var(--line);
+  }
+  .stat-item{text-align:center; padding:16px 8px; border-right:1px solid var(--line);}
+  .stat-item:last-child{border-right:none;}
+  .stat-num{font-family:'Baloo 2',sans-serif; font-size:22px; font-weight:800; color:var(--navy);}
+  .stat-lbl{font-size:10.5px; color:var(--muted); margin-top:2px; line-height:1.3;}
+
+  /* ---- How it works ---- */
+  .how-it-works{padding-top:6px;}
+
+  /* ---- Featured products slideshow ---- */
+  .featured-section{padding:16px 0 8px;}
+  .fs-wrap{position:relative; overflow:hidden;}
+  .fs-track{display:flex; transition:transform .4s ease;}
+  .fs-slide{
+    min-width:100%; height:180px; position:relative; flex-shrink:0; cursor:pointer;
+    background-size:cover; background-position:center;
+  }
+  .fs-slide::after{
+    content:''; position:absolute; inset:0;
+    background:linear-gradient(0deg, rgba(10,14,25,.82) 0%, rgba(10,14,25,.15) 55%, transparent 80%);
+  }
+  .fs-info{position:absolute; left:16px; right:16px; bottom:12px; color:#fff; z-index:1;}
+  .fs-info .fs-name{font-family:'Baloo 2',sans-serif; font-size:16px; font-weight:700;}
+  .fs-info .fs-meta{font-size:12px; opacity:.9; margin-top:2px;}
+  .fs-info .fs-price{font-size:14px; font-weight:800; color:var(--gold); margin-top:3px;}
+  .fs-dots{display:flex; gap:6px; justify-content:center; margin-top:10px;}
+  .fs-dots .fdot{width:6px; height:6px; border-radius:50%; background:var(--line);}
+  .fs-dots .fdot.active{background:var(--coral); width:16px; border-radius:4px;}
+  .music-toggle{
+    position:absolute; top:12px; right:12px; z-index:2; width:38px; height:38px; border-radius:50%;
+    background:rgba(10,14,25,.55); border:1px solid rgba(255,255,255,.3); color:#fff;
+    font-size:16px; cursor:pointer;
+  }
+  .music-toggle.playing{background:var(--coral); border-color:var(--coral);}
+  .how-grid{display:flex; flex-direction:column; gap:12px;}
+  .how-step{display:flex; gap:14px; align-items:flex-start; background:#fff; border:1px solid var(--line); border-radius:14px; padding:14px;}
+  .how-num{
+    width:32px; height:32px; border-radius:50%; background:var(--navy); color:var(--gold);
+    display:flex; align-items:center; justify-content:center; font-weight:800; font-family:'Baloo 2',sans-serif;
+    font-size:15px; flex-shrink:0;
+  }
+  .how-text{display:flex; flex-direction:column; gap:2px;}
+  .how-text strong{font-size:14px;}
+  .how-text span{font-size:12.5px; color:var(--muted); line-height:1.5;}
+
+  /* ---- Search ---- */
+  .search-box{margin-bottom:14px;}
+  .search-box input{
+    width:100%; padding:12px 14px; border-radius:12px; border:1.5px solid var(--line);
+    font-size:14px; font-family:'Inter',sans-serif; background:#fff;
+  }
+  .search-box input:focus{outline:none; border-color:var(--navy);}
+
+  .subcats{display:flex; gap:8px; flex-wrap:wrap; margin-top:12px;}
+  .subcat-chip{
+    background:#fff; border:1.5px solid var(--line); padding:7px 13px; border-radius:99px;
+    font-size:12px; font-weight:600; color:var(--ink); cursor:pointer;
+  }
+  .subcat-chip.active{background:var(--navy); color:#fff; border-color:var(--navy);}
+
+  /* ---- Verified badge ---- */
+  .verified{
+    display:inline-flex; align-items:center; gap:3px; font-size:10px; font-weight:700;
+    color:var(--green); margin-left:6px;
+  }
+  .hot-badge{
+    display:inline-flex; align-items:center; gap:2px; font-size:10px; font-weight:700;
+    color:var(--coral); margin-left:6px; background:#FFF0E5; padding:2px 7px; border-radius:99px;
+  }
+  .v-area{font-size:11.5px; color:var(--muted); margin-top:4px; display:flex; align-items:center; gap:3px;}
+
+  .pitch-box{
+    background:linear-gradient(135deg, var(--navy), #24365e); color:#fff; border-radius:12px;
+    padding:14px 15px; font-size:13px; line-height:1.55; margin-bottom:14px; font-weight:500;
+  }
+
+  /* ---- Floating CTA ---- */
+  .fab{
+    position:fixed; bottom:18px; left:18px; right:18px; z-index:50;
+    background:var(--coral); color:#fff; border:none; border-radius:14px;
+    padding:15px; font-weight:700; font-size:15px; font-family:'Inter',sans-serif;
+    box-shadow:0 8px 22px rgba(232,84,42,.35); cursor:pointer;
+  }
+
+  /* ---- Modal ---- */
+  .overlay{
+    position:fixed; inset:0; background:rgba(15,20,35,.55); z-index:60;
+    display:none; align-items:flex-end; justify-content:center;
+  }
+  .overlay.show{display:flex;}
+  .sheet{
+    background:#fff; width:100%; max-width:480px; border-radius:20px 20px 0 0;
+    padding:22px 20px 26px; max-height:88vh; overflow-y:auto;
+  }
+  .sheet h3{font-size:19px; margin-bottom:4px;}
+  .sheet .sub{font-size:13px; color:var(--muted); margin-bottom:16px;}
+  .field{margin-bottom:13px;}
+  .field label{display:block; font-size:12.5px; font-weight:600; margin-bottom:5px; color:#374151;}
+  .field input, .field select{
+    width:100%; padding:12px 13px; border-radius:10px; border:1.5px solid var(--line);
+    font-size:14px; font-family:'Inter',sans-serif; background:var(--paper);
+  }
+  .field input:focus, .field select:focus{outline:none; border-color:var(--navy);}
+  .sheet-actions{display:flex; gap:10px; margin-top:6px;}
+  .btn-close{background:var(--paper); color:var(--ink); border:1px solid var(--line);}
+  .fee-note{
+    background:#FFF7E8; border:1px solid #F3D9A0; border-radius:10px; padding:10px 12px;
+    font-size:12.5px; color:#7A5A12; margin-bottom:16px; line-height:1.5;
+  }
+  .toast{
+    position:fixed; top:70px; left:50%; transform:translateX(-50%); z-index:80;
+    background:var(--ink); color:#fff; padding:11px 18px; border-radius:10px; font-size:13.5px;
+    font-weight:600; opacity:0; transition:opacity .25s ease; pointer-events:none;
+  }
+  .toast.show{opacity:1;}
+
+  .site-gate{
+    position:fixed; inset:0; z-index:200; background:var(--navy);
+    display:flex; align-items:center; justify-content:center; padding:24px;
+  }
+  .gate-card{
+    background:#fff; border-radius:20px; padding:32px 24px; width:100%; max-width:360px; text-align:center;
+  }
+  .gate-icon{font-size:38px; margin-bottom:10px;}
+  .gate-card h1{font-family:'Baloo 2',sans-serif; font-size:21px; margin-bottom:8px; color:var(--navy);}
+  .gate-card p{font-size:13px; color:var(--muted); line-height:1.6; margin-bottom:18px;}
+  .gate-card input{
+    width:100%; padding:13px 14px; border-radius:12px; border:1.5px solid var(--line);
+    font-size:15px; text-align:center; font-family:'Inter',sans-serif; letter-spacing:1px;
+  }
+  .gate-card input:focus{outline:none; border-color:var(--navy);}
+  .gate-error{display:none; color:var(--coral); font-size:12.5px; margin-top:10px; font-weight:600;}
+
+  .zoom-overlay{
+    position:fixed; inset:0; background:rgba(10,14,25,.96); z-index:120;
+    display:none; align-items:center; justify-content:center; flex-direction:column;
+    padding:20px; touch-action:pan-y;
+  }
+  .zoom-overlay.show{display:flex;}
+  .zoom-stage{width:100%; display:flex; align-items:center; justify-content:center; cursor:grab; user-select:none;}
+  .zoom-stage:active{cursor:grabbing;}
+  .zoom-image{
+    max-width:100%; max-height:70vh; object-fit:contain; border-radius:10px;
+    transition:transform .2s ease; transform:scale(1); pointer-events:none;
+  }
+  .zoom-image.zoomed{transform:scale(2.2);}
+  .zoom-close{
+    position:absolute; top:18px; right:18px; width:38px; height:38px; border-radius:50%;
+    background:rgba(255,255,255,.15); color:#fff; border:1px solid rgba(255,255,255,.3);
+    font-size:16px; cursor:pointer; z-index:2;
+  }
+  .zoom-caption{color:#fff; font-size:14px; font-weight:600; margin-bottom:14px; text-align:center; font-family:'Baloo 2',sans-serif;}
+  .zoom-hint{color:rgba(255,255,255,.6); font-size:11.5px; margin-top:14px; text-align:center;}
+  .zoom-dots{display:flex; gap:6px; justify-content:center; margin-top:16px;}
+  .zdot{width:7px; height:7px; border-radius:50%; background:rgba(255,255,255,.3);}
+  .zdot.active{background:var(--gold);}
+</style>
+</head>
+<body>
+
+<!-- Site access gate (private testing mode) -->
+<div id="siteGate" class="site-gate">
+  <div class="gate-card">
+    <div class="gate-icon">🔒</div>
+    <h1>ECK MARKET DSM</h1>
+    <p>Soko liko kwenye majaribio ya faragha kwa sasa. Weka nambari ya siri kuendelea.</p>
+    <input type="password" id="gateCode" placeholder="Nambari ya siri" inputmode="text">
+    <button class="btn btn-primary" style="width:100%;margin-top:10px;" onclick="checkGateCode()">Ingia</button>
+    <div class="gate-error" id="gateError">Nambari si sahihi. Jaribu tena.</div>
+  </div>
+</div>
+
+<div id="siteContent" style="display:none;">
+
+<header>
+  <div class="brand"><span class="dot"></span><span data-i18n="brand">ECK MARKET DSM</span></div>
+  <div class="lang-switch">
+    <button data-lang="sw" class="active">SW</button>
+    <button data-lang="en">EN</button>
+    <button data-lang="fr">FR</button>
+  </div>
+</header>
+
+<div class="hero">
+  <div class="eyebrow" data-i18n="eyebrow">SOKO LA MTANDAONI · DAR ES SALAAM</div>
+  <h1 data-i18n="heroTitle">Kila kona ya Kariakoo, sasa mfukoni mwako.</h1>
+  <p data-i18n="heroSub">Nunua nguo, viatu, vifaa vya simu na TV moja kwa moja kutoka kwa wachuuzi wa jumla wa Dar es Salaam.</p>
+  <div class="hero-actions">
+    <button class="btn btn-primary" onclick="scrollToMarket()" data-i18n="btnBrowse">Ingia Sokoni</button>
+    <button class="btn btn-ghost" onclick="openVendorSheet()" data-i18n="btnSell">Uza Bidhaa Zako</button>
+    <button class="btn btn-ghost" onclick="openMyOrdersSheet()" data-i18n="btnMyOrders">Maagizo Yangu</button>
+  </div>
+</div>
+
+<div class="stats-bar">
+  <div class="stat-item">
+    <div class="stat-num" id="statVendors">0</div>
+    <div class="stat-lbl" data-i18n="statVendors">Wachuuzi Waliothibitishwa</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-num" id="statProducts">0</div>
+    <div class="stat-lbl" data-i18n="statProducts">Bidhaa Sokoni</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-num" id="statSectionsNum">0</div>
+    <div class="stat-lbl" data-i18n="statSections">Sehemu za Soko</div>
+  </div>
+</div>
+
+<!-- Featured products slideshow -->
+<section class="featured-section" id="featuredSection" style="display:none;">
+  <div class="fs-wrap" id="fsWrap">
+    <div class="fs-track" id="fsTrack"></div>
+    <button class="music-toggle" id="musicToggle" onclick="toggleMusic()">🎵</button>
+  </div>
+  <div class="fs-dots" id="fsDots"></div>
+</section>
+
+<audio id="bgMusic" loop preload="none" src="eck-bg-music.mp3"></audio>
+
+<section id="market">
+  <div class="section-head">
+    <h2 data-i18n="sectionsTitle">Sehemu za Soko</h2>
+    <span data-i18n="sectionsSub">Chagua eneo</span>
+  </div>
+  <div class="stalls" id="stalls"></div>
+  <div class="subcats" id="subcats" style="display:none;"></div>
+</section>
+
+<section class="how-it-works">
+  <div class="section-head">
+    <h2 data-i18n="howTitle">Jinsi Inavyofanya Kazi</h2>
+  </div>
+  <div class="how-grid">
+    <div class="how-step">
+      <div class="how-num">1</div>
+      <div class="how-text"><strong data-i18n="how1Title">Chagua</strong><span data-i18n="how1Text">Vinjari sehemu za soko na uone maduka ya wachuuzi mbalimbali.</span></div>
+    </div>
+    <div class="how-step">
+      <div class="how-num">2</div>
+      <div class="how-text"><strong data-i18n="how2Title">Agiza</strong><span data-i18n="how2Text">Bofya Nunua, jaza taarifa zako, agizo linamfikia muuzaji papo hapo.</span></div>
+    </div>
+    <div class="how-step">
+      <div class="how-num">3</div>
+      <div class="how-text"><strong data-i18n="how3Title">Lipa na Pokea</strong><span data-i18n="how3Text">Ongea na muuzaji kwa simu, lipa M-Pesa/Tigo Pesa, pokea mzigo wako.</span></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="section-head">
+    <h2 id="vendorsHeading" data-i18n="vendorsTitle" style="scroll-margin-top:64px;">Wachuuzi</h2>
+    <span id="vendorsCount"></span>
+  </div>
+  <div class="search-box">
+    <input type="text" id="searchInput" placeholder="Tafuta bidhaa au duka…" oninput="handleSearch()" data-i18n-placeholder="searchPlaceholder">
+  </div>
+  <div id="vendorsList"></div>
+</section>
+
+<button class="fab" onclick="openVendorSheet()" data-i18n="fab">+ Fungua Duka Lako</button>
+
+<!-- Vendor registration sheet -->
+<div class="overlay" id="overlay">
+  <div class="sheet">
+    <h3 data-i18n="formTitle">Fungua Duka Lako</h3>
+    <p class="sub" data-i18n="formSub">Jaza taarifa zako ili kuanza kuuza kwenye ECK MARKET DSM.</p>
+    <div class="pitch-box" data-i18n="pitchBox">Jiunge na maelfu ya wafanyabiashara wanaouza Dar es Salaam nzima. Duka lako, wateja wako, faida yako — kila siku.</div>
+    <div class="fee-note" data-i18n="feeNote">Ada ya matumizi ya soko ni Tsh 10,000 kwa mwezi. Baada ya kujisajili, timu yetu itakupigia kukamilisha malipo na kuwezesha duka lako.</div>
+
+
+    <div class="field">
+      <label data-i18n="labelFullName">Jina lako kamili</label>
+      <input type="text" id="f_fullname" placeholder="Mfano: Amina Juma">
+    </div>
+    <div class="field">
+      <label data-i18n="labelBusiness">Jina la biashara / duka</label>
+      <input type="text" id="f_business" placeholder="Mfano: Amina Fashions">
+    </div>
+    <div class="field">
+      <label data-i18n="labelPhone">Namba ya simu</label>
+      <input type="tel" id="f_phone" placeholder="0712 345 678">
+    </div>
+    <div class="field">
+      <label data-i18n="labelCategory">Unauza nini?</label>
+      <select id="f_category"></select>
+    </div>
+    <div class="field">
+      <label data-i18n="labelArea">Eneo/Mtaa (mfano: Kariakoo, Kisutu, Ilala)</label>
+      <input type="text" id="f_area" placeholder="Kariakoo">
+    </div>
+
+    <div class="sheet-actions">
+      <button class="btn btn-close" onclick="closeVendorSheet()" data-i18n="btnCancel">Ghairi</button>
+      <button class="btn btn-primary" style="flex:1" onclick="submitVendor()" data-i18n="btnSubmit">Tuma Maombi</button>
+    </div>
+  </div>
+</div>
+
+<!-- Order sheet -->
+<div class="overlay" id="orderOverlay">
+  <div class="sheet" id="orderSheetContent">
+    <!-- filled dynamically -->
+  </div>
+</div>
+
+<!-- My orders sheet -->
+<div class="overlay" id="myOrdersOverlay">
+  <div class="sheet">
+    <h3 data-i18n="myOrdersTitle">Maagizo Yangu</h3>
+    <p class="sub" data-i18n="myOrdersSub">Weka namba yako ya simu kuona maagizo yako.</p>
+    <div class="field">
+      <label data-i18n="labelPhone">Namba ya simu</label>
+      <input type="tel" id="lookup_phone" placeholder="0712 345 678">
+    </div>
+    <div class="sheet-actions">
+      <button class="btn btn-close" onclick="closeMyOrdersSheet()" data-i18n="btnCancel">Ghairi</button>
+      <button class="btn btn-primary" style="flex:1" onclick="lookupMyOrders()" data-i18n="btnSearch">Tafuta</button>
+    </div>
+    <div id="myOrdersList" style="margin-top:16px;"></div>
+  </div>
+</div>
+
+<!-- Image zoom viewer (360 rotate) -->
+<div class="zoom-overlay" id="zoomOverlay" onclick="closeImageZoomOnBg(event)">
+  <button class="zoom-close" onclick="closeImageZoom()">✕</button>
+  <div class="zoom-caption" id="zoomCaption"></div>
+  <div class="zoom-stage" id="zoomStage">
+    <img id="zoomImage" class="zoom-image" src="" draggable="false" ondblclick="toggleZoomScale()">
+  </div>
+  <div class="zoom-dots" id="zoomDots"></div>
+  <div class="zoom-hint" id="zoomHint">Sogeza kidole kushoto/kulia kuzungusha · gusa mara mbili kukuza</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SUPABASE_URL = "https://plxmjbscgyhkahisjgzc.supabase.co";
+const SUPABASE_KEY = "sb_publishable_7erIyzDiTVwL8HbyN9eBYg_RLfzWbuv";
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const I18N = {
+  sw: {
+    brand:"ECK MARKET DSM",
+    eyebrow:"SOKO LA MTANDAONI · DAR ES SALAAM",
+    heroTitle:"Kila kona ya Kariakoo, sasa mfukoni mwako.",
+    heroSub:"Nunua nguo, viatu, vifaa vya simu na TV moja kwa moja kutoka kwa wachuuzi wa jumla wa Dar es Salaam.",
+    btnBrowse:"Ingia Sokoni", btnSell:"Uza Bidhaa Zako",
+    sectionsTitle:"Sehemu za Soko", sectionsSub:"Chagua eneo",
+    vendorsTitle:"Wachuuzi", vendorsAll:"Wachuuzi Wote",
+    fab:"+ Fungua Duka Lako",
+    formTitle:"Fungua Duka Lako", formSub:"Jaza taarifa zako ili kuanza kuuza kwenye ECK MARKET DSM.",
+    feeNote:"Ada ya matumizi ya soko ni Tsh 10,000 kwa mwezi. Baada ya kujisajili, timu yetu itakupigia kukamilisha malipo na kuwezesha duka lako.",
+    labelFullName:"Jina lako kamili", labelBusiness:"Jina la biashara / duka",
+    labelPhone:"Namba ya simu", labelCategory:"Unauza nini?", labelArea:"Eneo/Mtaa (mfano: Kariakoo, Kisutu, Ilala)",
+    btnCancel:"Ghairi", btnSubmit:"Tuma Maombi",
+    emptyVendors:"Hakuna muuzaji bado katika sehemu hii. Kuwa wa kwanza!",
+    toastSent:"Maombi yamepokelewa! Tutakupigia hivi karibuni.",
+    toastError:"Tatizo limetokea. Jaribu tena.",
+    toastFill:"Tafadhali jaza sehemu zote.",
+    btnBuy:"Nunua", btnMyOrders:"Maagizo Yangu",
+    orderTitle:"Kamilisha Agizo", orderSub:"Jaza taarifa zako ili muuzaji akutumie mzigo.",
+    labelName:"Jina lako", labelQty:"Idadi", labelAddress:"Mahali pa kupokelea (mtaa/eneo)",
+    btnPlaceOrder:"Tuma Agizo",
+    orderDoneTitle:"Agizo Limetumwa!",
+    orderDoneText:"Wasiliana na muuzaji kukamilisha malipo ya M-Pesa/Tigo Pesa na kupanga uletaji.",
+    vcLabel:"Piga simu kwa muuzaji",
+    btnCall:"Piga Simu", btnWhatsapp:"WhatsApp",
+    btnClose:"Funga",
+    myOrdersTitle:"Maagizo Yangu", myOrdersSub:"Weka namba yako ya simu kuona maagizo yako.",
+    btnSearch:"Tafuta",
+    noOrders:"Hakuna maagizo yaliyopatikana kwa namba hiyo.",
+    payPending:"Malipo Yanasubiri", payPaid:"Imelipwa",
+    delivPending:"Inasubiri", delivProcessing:"Inaandaliwa", delivShipped:"Imetumwa", delivDelivered:"Imefika",
+    statVendors:"Wachuuzi Waliothibitishwa", statProducts:"Bidhaa Sokoni", statSections:"Sehemu za Soko",
+    howTitle:"Jinsi Inavyofanya Kazi",
+    how1Title:"Chagua", how1Text:"Vinjari sehemu za soko na uone maduka ya wachuuzi mbalimbali.",
+    how2Title:"Agiza", how2Text:"Bofya Nunua, jaza taarifa zako, agizo linamfikia muuzaji papo hapo.",
+    how3Title:"Lipa na Pokea", how3Text:"Ongea na muuzaji kwa simu, lipa M-Pesa/Tigo Pesa, pokea mzigo wako.",
+    pitchBox:"Jiunge na maelfu ya wafanyabiashara wanaouza Dar es Salaam nzima. Duka lako, wateja wako, faida yako — kila siku.",
+    searchPlaceholder:"Tafuta bidhaa au duka…",
+    noSearchResults:"Hakuna kilichopatikana kwa utafutaji huo."
+  },
+  en: {
+    brand:"ECK MARKET DSM",
+    eyebrow:"ONLINE MARKETPLACE · DAR ES SALAAM",
+    heroTitle:"Every corner of Kariakoo, now in your pocket.",
+    heroSub:"Buy clothes, shoes, phone accessories and TVs directly from wholesale vendors in Dar es Salaam.",
+    btnBrowse:"Browse Market", btnSell:"Sell Your Products",
+    sectionsTitle:"Market Sections", sectionsSub:"Choose a section",
+    vendorsTitle:"Vendors", vendorsAll:"All Vendors",
+    fab:"+ Open Your Shop",
+    formTitle:"Open Your Shop", formSub:"Fill in your details to start selling on ECK MARKET DSM.",
+    feeNote:"Marketplace fee is Tsh 10,000 per month. After you register, our team will call you to complete payment and activate your shop.",
+    labelFullName:"Your full name", labelBusiness:"Business / shop name",
+    labelPhone:"Phone number", labelCategory:"What do you sell?", labelArea:"Area/Street (e.g. Kariakoo, Kisutu, Ilala)",
+    btnCancel:"Cancel", btnSubmit:"Submit Application",
+    emptyVendors:"No vendors yet in this section. Be the first!",
+    toastSent:"Application received! We'll call you soon.",
+    toastError:"Something went wrong. Please try again.",
+    toastFill:"Please fill in all fields.",
+    btnBuy:"Buy", btnMyOrders:"My Orders",
+    orderTitle:"Complete Order", orderSub:"Fill in your details so the vendor can send your item.",
+    labelName:"Your name", labelQty:"Quantity", labelAddress:"Delivery location (street/area)",
+    btnPlaceOrder:"Place Order",
+    orderDoneTitle:"Order Sent!",
+    orderDoneText:"Contact the vendor to complete M-Pesa/Tigo Pesa payment and arrange delivery.",
+    vcLabel:"Call the vendor",
+    btnCall:"Call", btnWhatsapp:"WhatsApp",
+    btnClose:"Close",
+    myOrdersTitle:"My Orders", myOrdersSub:"Enter your phone number to see your orders.",
+    btnSearch:"Search",
+    noOrders:"No orders found for that number.",
+    payPending:"Payment Pending", payPaid:"Paid",
+    delivPending:"Pending", delivProcessing:"Processing", delivShipped:"Shipped", delivDelivered:"Delivered",
+    statVendors:"Verified Vendors", statProducts:"Products Listed", statSections:"Market Sections",
+    howTitle:"How It Works",
+    how1Title:"Browse", how1Text:"Explore market sections and see shops from different vendors.",
+    how2Title:"Order", how2Text:"Tap Buy, fill in your details, the order reaches the vendor instantly.",
+    how3Title:"Pay & Receive", how3Text:"Talk to the vendor by phone, pay via M-Pesa/Tigo Pesa, receive your goods.",
+    pitchBox:"Join thousands of businesses selling across Dar es Salaam. Your shop, your customers, your profit — every day.",
+    searchPlaceholder:"Search products or shops…",
+    noSearchResults:"No results found for that search."
+  },
+  fr: {
+    brand:"ECK MARKET DSM",
+    eyebrow:"MARCHÉ EN LIGNE · DAR ES SALAAM",
+    heroTitle:"Tout Kariakoo, désormais dans votre poche.",
+    heroSub:"Achetez vêtements, chaussures, accessoires de téléphone et téléviseurs directement auprès des grossistes de Dar es Salaam.",
+    btnBrowse:"Voir le marché", btnSell:"Vendez vos produits",
+    sectionsTitle:"Sections du marché", sectionsSub:"Choisissez une section",
+    vendorsTitle:"Vendeurs", vendorsAll:"Tous les vendeurs",
+    fab:"+ Ouvrir votre boutique",
+    formTitle:"Ouvrir votre boutique", formSub:"Remplissez vos informations pour commencer à vendre sur ECK MARKET DSM.",
+    feeNote:"Les frais du marché sont de 10 000 Tsh par mois. Après inscription, notre équipe vous appellera pour finaliser le paiement et activer votre boutique.",
+    labelFullName:"Votre nom complet", labelBusiness:"Nom de l'entreprise / boutique",
+    labelPhone:"Numéro de téléphone", labelCategory:"Que vendez-vous ?", labelArea:"Zone/Rue (ex: Kariakoo, Kisutu, Ilala)",
+    btnCancel:"Annuler", btnSubmit:"Envoyer la demande",
+    emptyVendors:"Aucun vendeur pour le moment dans cette section. Soyez le premier !",
+    toastSent:"Demande reçue ! Nous vous appellerons bientôt.",
+    toastError:"Une erreur s'est produite. Réessayez.",
+    toastFill:"Veuillez remplir tous les champs.",
+    btnBuy:"Acheter", btnMyOrders:"Mes commandes",
+    orderTitle:"Finaliser la commande", orderSub:"Remplissez vos informations pour que le vendeur vous envoie l'article.",
+    labelName:"Votre nom", labelQty:"Quantité", labelAddress:"Lieu de livraison (rue/quartier)",
+    btnPlaceOrder:"Passer la commande",
+    orderDoneTitle:"Commande envoyée !",
+    orderDoneText:"Contactez le vendeur pour finaliser le paiement M-Pesa/Tigo Pesa et organiser la livraison.",
+    vcLabel:"Appeler le vendeur",
+    btnCall:"Appeler", btnWhatsapp:"WhatsApp",
+    btnClose:"Fermer",
+    myOrdersTitle:"Mes commandes", myOrdersSub:"Entrez votre numéro de téléphone pour voir vos commandes.",
+    btnSearch:"Rechercher",
+    noOrders:"Aucune commande trouvée pour ce numéro.",
+    payPending:"Paiement en attente", payPaid:"Payé",
+    delivPending:"En attente", delivProcessing:"En préparation", delivShipped:"Expédié", delivDelivered:"Livré",
+    statVendors:"Vendeurs vérifiés", statProducts:"Produits en ligne", statSections:"Sections du marché",
+    howTitle:"Comment ça marche",
+    how1Title:"Parcourez", how1Text:"Explorez les sections du marché et découvrez les boutiques des vendeurs.",
+    how2Title:"Commandez", how2Text:"Appuyez sur Acheter, remplissez vos informations, la commande arrive au vendeur instantanément.",
+    how3Title:"Payez et recevez", how3Text:"Appelez le vendeur, payez via M-Pesa/Tigo Pesa, recevez vos articles.",
+    pitchBox:"Rejoignez des milliers de commerçants qui vendent dans tout Dar es Salaam. Votre boutique, vos clients, votre profit — chaque jour.",
+    searchPlaceholder:"Rechercher des produits ou boutiques…",
+    noSearchResults:"Aucun résultat trouvé pour cette recherche."
+  }
+};
+
+let currentLang = 'sw';
+let categories = [];
+let activeCategory = null; // null = zote
+let productMap = {};
+let vendorMap = {};
+let selectedProductId = null;
+let lastVendorsData = [];
+let activeSubcat = null;
+
+const SUBCATS = {
+  'nguo': ['Wanaume','Wanawake','Watoto','Vitenge/Kanga','Madera','Suti','Kofia','Mabegi','Mikoba ya Wamama','Mavazi ya Ndani'],
+  'viatu': ['Wanaume','Wanawake','Watoto','Michezo (Sneakers)'],
+  'simu': ['Vipochi (Cases)','Chaja','Vipokea Sauti','Screen Protector','Power Bank'],
+  'tv-spea': ['TV','Spika','Vipuri/Remote','Antena'],
+  'baiskeli-pikipiki': ['Baiskeli', 'Pikipiki', 'Bajaji (Tuk-tuk)', 'Vipuri/Spea', 'Chaja/Betri']
+};
+
+function t(key){ return I18N[currentLang][key] || key; }
+
+function applyI18n(){
+  document.querySelectorAll('[data-i18n]').forEach(el=>{
+    el.textContent = t(el.getAttribute('data-i18n'));
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el=>{
+    el.setAttribute('placeholder', t(el.getAttribute('data-i18n-placeholder')));
+  });
+  document.getElementById('vendorsHeading').textContent = activeCategory
+    ? (categories.find(c=>c.id===activeCategory)?.['name_'+currentLang] || t('vendorsTitle'))
+    : t('vendorsAll');
+  renderCategorySelect();
+}
+
+document.querySelectorAll('.lang-switch button').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    currentLang = btn.getAttribute('data-lang');
+    document.querySelectorAll('.lang-switch button').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    applyI18n();
+    renderStalls();
+    renderVendorsList(lastVendorsData, document.getElementById('vendorsCount'), document.getElementById('vendorsList'));
+  });
+});
+
+function scrollToMarket(){ document.getElementById('market').scrollIntoView({behavior:'smooth'}); }
+
+let zoomImages = [];
+let zoomIndex = 0;
+const ZOOM_STEP_PX = 40;
+
+function openImageZoom(images, name){
+  zoomImages = (Array.isArray(images) ? images : [images]).filter(Boolean);
+  if(zoomImages.length===0) return;
+  zoomIndex = 0;
+  document.getElementById('zoomCaption').textContent = name || '';
+  document.getElementById('zoomImage').classList.remove('zoomed');
+  renderZoomImage();
+  renderZoomDots();
+  document.getElementById('zoomHint').style.display = zoomImages.length>1 ? 'block':'none';
+  document.getElementById('zoomOverlay').classList.add('show');
+}
+
+function renderZoomImage(){ document.getElementById('zoomImage').src = zoomImages[zoomIndex]; }
+
+function renderZoomDots(){
+  const dotsEl = document.getElementById('zoomDots');
+  if(zoomImages.length<=1){ dotsEl.innerHTML=''; return; }
+  dotsEl.innerHTML = zoomImages.map((_,i)=>`<span class="zdot ${i===zoomIndex?'active':''}"></span>`).join('');
+}
+
+function closeImageZoom(){ document.getElementById('zoomOverlay').classList.remove('show'); }
+function closeImageZoomOnBg(e){ if(e.target.id === 'zoomOverlay'){ closeImageZoom(); } }
+function toggleZoomScale(){ document.getElementById('zoomImage').classList.toggle('zoomed'); }
+
+(function setupZoomDrag(){
+  const stage = document.getElementById('zoomStage');
+  if(!stage) return;
+  let startX = null, accum = 0;
+
+  function stepIfNeeded(){
+    if(Math.abs(accum) >= ZOOM_STEP_PX && zoomImages.length>1){
+      const dir = accum > 0 ? -1 : 1;
+      zoomIndex = (zoomIndex + dir + zoomImages.length) % zoomImages.length;
+      renderZoomImage();
+      renderZoomDots();
+      accum = 0;
+    }
+  }
+
+  stage.addEventListener('touchstart', e=>{ startX = e.touches[0].clientX; accum = 0; });
+  stage.addEventListener('touchmove', e=>{
+    if(startX===null) return;
+    const x = e.touches[0].clientX;
+    accum += x - startX;
+    startX = x;
+    stepIfNeeded();
+  });
+  stage.addEventListener('touchend', ()=>{ startX=null; accum=0; });
+
+  stage.addEventListener('mousedown', e=>{ startX = e.clientX; accum = 0; e.preventDefault(); });
+  window.addEventListener('mousemove', e=>{
+    if(startX===null) return;
+    accum += e.clientX - startX;
+    startX = e.clientX;
+    stepIfNeeded();
+  });
+  window.addEventListener('mouseup', ()=>{ startX=null; accum=0; });
+})();
+
+function showToast(msg){
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'), 2600);
+}
+
+async function loadCategories(){
+  const { data, error } = await sb.from('categories').select('*').order('name_sw');
+  if(error){ console.error(error); return; }
+  categories = data || [];
+  renderStalls();
+  renderCategorySelect();
+}
+
+function renderCategorySelect(){
+  const sel = document.getElementById('f_category');
+  sel.innerHTML = '';
+  categories.forEach(c=>{
+    const opt = document.createElement('option');
+    opt.value = c.id;
+    opt.textContent = c['name_'+currentLang] || c.name_sw;
+    sel.appendChild(opt);
+  });
+}
+
+const CAT_ICONS = {
+  nguo:'👗', viatu:'👟', simu:'📱', 'tv-spea':'📺', mix:'🧺', 'baiskeli-pikipiki':'🏍️'
+};
+let categoryCounts = {};
+
+async function loadCategoryCounts(){
+  const { data } = await sb.from('vendors').select('category_id').eq('status','active');
+  categoryCounts = {};
+  (data||[]).forEach(v=>{ categoryCounts[v.category_id] = (categoryCounts[v.category_id]||0) + 1; });
+}
+
+function vendorCountLabel(n){
+  if(!n) return currentLang==='sw' ? 'Bado hakuna duka' : currentLang==='fr' ? 'Aucune boutique' : 'No shops yet';
+  const word = currentLang==='sw' ? 'duka' : currentLang==='fr' ? (n>1?'boutiques':'boutique') : (n>1?'shops':'shop');
+  return `${n} ${word}`;
+}
+
+function renderStalls(){
+  const wrap = document.getElementById('stalls');
+  wrap.innerHTML = '';
+  categories.forEach(c=>{
+    const btn = document.createElement('button');
+    btn.className = 'stall' + (activeCategory===c.id ? ' active':'');
+    btn.setAttribute('data-cat', c.slug);
+    btn.onclick = ()=>{
+      const wasSame = activeCategory===c.id;
+      activeCategory = wasSame ? null : c.id;
+      activeSubcat = null;
+      renderStalls();
+      renderSubcats();
+      loadVendors();
+      applyI18n();
+      if(!wasSame){
+        setTimeout(()=>{
+          document.getElementById('vendorsHeading').scrollIntoView({behavior:'smooth', block:'start'});
+        }, 120);
+      }
+    };
+    const icon = CAT_ICONS[c.slug] || '🛒';
+    const count = categoryCounts[c.id] || 0;
+    btn.innerHTML = `<div class="stall-icon">${icon}</div><div class="stall-title">${c['name_'+currentLang] || c.name_sw}</div><div class="stall-count">${vendorCountLabel(count)}</div>`;
+    wrap.appendChild(btn);
+  });
+  renderSubcats();
+}
+
+function renderSubcats(){
+  const wrap = document.getElementById('subcats');
+  const cat = categories.find(c=>c.id===activeCategory);
+  const opts = cat ? (SUBCATS[cat.slug] || []) : [];
+
+  if(!opts.length){ wrap.style.display = 'none'; wrap.innerHTML = ''; return; }
+
+  wrap.style.display = 'flex';
+  wrap.innerHTML = opts.map(o=>`
+    <div class="subcat-chip ${activeSubcat===o ? 'active':''}" onclick="selectSubcat('${o.replace(/'/g,"\\'")}')">${o}</div>
+  `).join('');
+}
+
+function selectSubcat(name){
+  activeSubcat = (activeSubcat===name) ? null : name;
+  renderSubcats();
+  renderVendorsList(lastVendorsData, document.getElementById('vendorsCount'), document.getElementById('vendorsList'));
+}
+
+async function loadVendors(){
+  const listEl = document.getElementById('vendorsList');
+  const countEl = document.getElementById('vendorsCount');
+  listEl.innerHTML = `<div class="empty">…</div>`;
+
+  let query = sb.from('vendors').select('*, products(*)').eq('status','active');
+  if(activeCategory) query = query.eq('category_id', activeCategory);
+  const { data, error } = await query;
+
+  if(error){ console.error(error); listEl.innerHTML = `<div class="empty">${t('toastError')}</div>`; return; }
+
+  lastVendorsData = data || [];
+  updateStats(lastVendorsData);
+  renderVendorsList(lastVendorsData, countEl, listEl);
+}
+
+function updateStats(data){
+  const statVendorsEl = document.getElementById('statVendors');
+  const statProductsEl = document.getElementById('statProducts');
+  if(!statVendorsEl) return;
+  statVendorsEl.textContent = data.length;
+  const totalProducts = data.reduce((sum,v)=> sum + (v.products ? v.products.length : 0), 0);
+  statProductsEl.textContent = totalProducts;
+  const statSectionsEl = document.getElementById('statSectionsNum');
+  if(statSectionsEl) statSectionsEl.textContent = categories.length;
+}
+
+let featuredSlides = [];
+let featuredIndex = 0;
+let featuredTimer = null;
+
+function buildFeaturedSlides(vendorsData){
+  const withImages = [];
+  vendorsData.forEach(v=>{
+    (v.products||[]).forEach(p=>{
+      if(p.image_url && p.in_stock!==false){
+        withImages.push({ url:p.image_url, name:p.name, price:p.price, vendorName:v.business_name, productId:p.id });
+      }
+    });
+  });
+  return withImages.slice(0, 10);
+}
+
+function renderFeaturedSlideshow(vendorsData){
+  featuredSlides = buildFeaturedSlides(vendorsData);
+  const section = document.getElementById('featuredSection');
+  const track = document.getElementById('fsTrack');
+  const dots = document.getElementById('fsDots');
+
+  if(featuredSlides.length === 0){
+    section.style.display = 'none';
+    return;
+  }
+  section.style.display = 'block';
+  featuredIndex = 0;
+
+  track.innerHTML = featuredSlides.map(s=>`
+    <div class="fs-slide" style="background-image:url('${s.url}')" onclick="openOrderSheet('${s.productId}')">
+      <div class="fs-info">
+        <div class="fs-name">${s.name}</div>
+        <div class="fs-meta">${s.vendorName}</div>
+        <div class="fs-price">Tsh ${Number(s.price).toLocaleString()}</div>
+      </div>
+    </div>
+  `).join('');
+
+  dots.innerHTML = featuredSlides.map((_,i)=>`<span class="fdot ${i===0?'active':''}"></span>`).join('');
+
+  if(featuredTimer) clearInterval(featuredTimer);
+  if(featuredSlides.length > 1){
+    featuredTimer = setInterval(nextFeaturedSlide, 4000);
+  }
+}
+
+function nextFeaturedSlide(){
+  featuredIndex = (featuredIndex + 1) % featuredSlides.length;
+  updateFeaturedPosition();
+}
+
+function updateFeaturedPosition(){
+  document.getElementById('fsTrack').style.transform = `translateX(-${featuredIndex*100}%)`;
+  document.querySelectorAll('#fsDots .fdot').forEach((d,i)=>d.classList.toggle('active', i===featuredIndex));
+}
+
+function toggleMusic(){
+  const audio = document.getElementById('bgMusic');
+  const btn = document.getElementById('musicToggle');
+  if(!audio.src){
+    showToast(currentLang==='sw' ? 'Bado hakuna wimbo ulioongezwa na mwenye soko.' : currentLang==='fr' ? "Aucune musique n'a encore été ajoutée." : 'No music has been added yet.');
+    return;
+  }
+  if(audio.paused){
+    audio.play().catch(()=>{
+      showToast(currentLang==='sw' ? 'Wimbo haujapatikana. Hakikisha faili "eck-bg-music.mp3" limepandishwa GitHub pamoja na index.html.' : 'Music file not found. Make sure "eck-bg-music.mp3" is uploaded alongside index.html.');
+    });
+    btn.textContent = '🔇';
+    btn.classList.add('playing');
+  } else {
+    audio.pause();
+    btn.textContent = '🎵';
+    btn.classList.remove('playing');
+  }
+}
+
+function handleSearch(){
+  const term = document.getElementById('searchInput').value.trim().toLowerCase();
+  const countEl = document.getElementById('vendorsCount');
+  const listEl = document.getElementById('vendorsList');
+
+  if(!term){ renderVendorsList(lastVendorsData, countEl, listEl); return; }
+
+  const filtered = lastVendorsData
+    .map(v=>{
+      const vendorMatches = v.business_name.toLowerCase().includes(term);
+      const matchingProducts = (v.products||[]).filter(p=>p.name.toLowerCase().includes(term));
+      if(vendorMatches) return v;
+      if(matchingProducts.length) return Object.assign({}, v, { products: matchingProducts });
+      return null;
+    })
+    .filter(Boolean);
+
+  renderVendorsList(filtered, countEl, listEl, true);
+}
+
+function renderVendorsList(data, countEl, listEl, isSearch){
+  let filteredData = data;
+  if(activeSubcat){
+    filteredData = data
+      .map(v=>{
+        const matching = (v.products||[]).filter(p=>p.subcategory===activeSubcat);
+        return matching.length ? Object.assign({}, v, { products: matching }) : null;
+      })
+      .filter(Boolean);
+  }
+
+  countEl.textContent = filteredData && filteredData.length ? `${filteredData.length}` : '';
+
+  if(!filteredData || filteredData.length===0){
+    listEl.innerHTML = `<div class="empty"><div class="big">${isSearch ? '🔍' : '🛍️'}</div>${isSearch ? t('noSearchResults') : t('emptyVendors')}</div>`;
+    return;
+  }
+
+  const catColor = {nguo:'var(--nguo)', viatu:'var(--viatu)', simu:'var(--simu)', 'tv-spea':'var(--tv)', mix:'var(--mix)', 'baiskeli-pikipiki':'var(--moto)'};
+  const verifiedLabel = currentLang==='sw' ? 'Imethibitishwa' : currentLang==='fr' ? 'Vérifié' : 'Verified';
+
+  listEl.innerHTML = filteredData.map(v=>{
+    const cat = categories.find(c=>c.id===v.category_id);
+    const color = cat ? catColor[cat.slug] : 'var(--navy)';
+    const products = (v.products||[]).slice(0,8);
+    products.forEach(p=>{ productMap[p.id] = p; vendorMap[p.id] = v; });
+
+    const productsHtml = products.length
+      ? products.filter(p=>p.in_stock!==false).map(p=>`
+          <div class="product">
+            <div class="ph" ${p.image_url ? `onclick='openImageZoom(${JSON.stringify((p.image_urls && p.image_urls.length ? p.image_urls : [p.image_url])).replace(/'/g,"&#39;")}, ${JSON.stringify(p.name||"").replace(/'/g,"&#39;")})' style="background-image:url('${p.image_url}');background-size:cover;background-position:center;cursor:zoom-in;"` : ''}>${p.image_url ? '' : '🏷️'}</div>
+            <div class="p-name">${p.name}</div>
+            <div class="p-price">Tsh ${Number(p.price).toLocaleString()}</div>
+            <button class="buy-btn" onclick="openOrderSheet('${p.id}')">${t('btnBuy')}</button>
+          </div>`).join('')
+      : `<div style="font-size:12px;color:var(--muted);padding:6px 0;">—</div>`;
+    const bigShopBadge = (v.products && v.products.length >= 6)
+      ? `<span class="hot-badge">🔥 ${currentLang==='sw'?'Duka Kubwa':currentLang==='fr'?'Grande Boutique':'Big Shop'}</span>` : '';
+
+    return `
+      <div class="vendor-card">
+        <div class="v-top">
+          <div class="v-name">${v.business_name}<span class="verified">✓ ${verifiedLabel}</span>${bigShopBadge}</div>
+          <div class="v-tag" style="background:${color}">${cat ? (cat['name_'+currentLang]||cat.name_sw) : ''}</div>
+        </div>
+        ${v.area ? `<div class="v-area">📍 ${v.area}</div>` : ''}
+        <div class="products-row">${productsHtml}</div>
+      </div>`;
+  }).join('');
+}
+
+function openVendorSheet(){ document.getElementById('overlay').classList.add('show'); }
+function closeVendorSheet(){ document.getElementById('overlay').classList.remove('show'); }
+
+async function submitVendor(){
+  const full_name = document.getElementById('f_fullname').value.trim();
+  const business_name = document.getElementById('f_business').value.trim();
+  const phone = document.getElementById('f_phone').value.trim();
+  const category_id = document.getElementById('f_category').value;
+  const area = document.getElementById('f_area').value.trim();
+
+  if(!full_name || !business_name || !phone || !category_id){
+    showToast(t('toastFill'));
+    return;
+  }
+
+  const { error } = await sb.from('vendors').insert({
+    full_name, business_name, phone, category_id, area: area || null, status:'pending'
+  });
+
+  if(error){
+    console.error(error);
+    showToast(t('toastError'));
+    return;
+  }
+
+  showToast(t('toastSent'));
+  closeVendorSheet();
+  document.getElementById('f_fullname').value='';
+  document.getElementById('f_business').value='';
+  document.getElementById('f_phone').value='';
+  document.getElementById('f_area').value='';
+}
+
+function openOrderSheet(productId){
+  selectedProductId = productId;
+  const p = productMap[productId];
+  const v = vendorMap[productId];
+  if(!p || !v) return;
+
+  document.getElementById('orderSheetContent').innerHTML = `
+    <h3>${t('orderTitle')}</h3>
+    <p class="sub" style="margin-bottom:16px;">${p.name} · Tsh ${Number(p.price).toLocaleString()}</p>
+    <div class="field">
+      <label>${t('labelName')}</label>
+      <input type="text" id="o_name" placeholder="Mfano: Juma Hassan">
+    </div>
+    <div class="field">
+      <label>${t('labelPhone')}</label>
+      <input type="tel" id="o_phone" placeholder="0712 345 678">
+    </div>
+    <div class="field">
+      <label>${t('labelQty')}</label>
+      <input type="number" id="o_qty" value="1" min="1">
+    </div>
+    <div class="field">
+      <label>${t('labelAddress')}</label>
+      <input type="text" id="o_address" placeholder="Mfano: Sinza, Dar es Salaam">
+    </div>
+    <div class="sheet-actions">
+      <button class="btn btn-close" onclick="closeOrderSheet()">${t('btnCancel')}</button>
+      <button class="btn btn-primary" style="flex:1" onclick="placeOrder()">${t('btnPlaceOrder')}</button>
+    </div>
+  `;
+  document.getElementById('orderOverlay').classList.add('show');
+}
+
+function closeOrderSheet(){ document.getElementById('orderOverlay').classList.remove('show'); }
+
+async function placeOrder(){
+  const name = document.getElementById('o_name').value.trim();
+  const phone = document.getElementById('o_phone').value.trim();
+  const qty = parseInt(document.getElementById('o_qty').value) || 1;
+  const address = document.getElementById('o_address').value.trim();
+
+  if(!name || !phone || !address){
+    showToast(t('toastFill'));
+    return;
+  }
+
+  const p = productMap[selectedProductId];
+  const v = vendorMap[selectedProductId];
+
+  // find or create customer
+  let customerId = null;
+  const { data: existing } = await sb.from('customers').select('id').eq('phone', phone).maybeSingle();
+  if(existing){
+    customerId = existing.id;
+  } else {
+    const { data: newCust, error: custErr } = await sb.from('customers')
+      .insert({ full_name:name, phone, preferred_language: currentLang }).select('id').single();
+    if(custErr){ showToast(t('toastError')); return; }
+    customerId = newCust.id;
+  }
+
+  const { error: orderErr } = await sb.from('orders').insert({
+    customer_id: customerId, vendor_id: v.id, product_id: p.id,
+    quantity: qty, total_price: p.price * qty, delivery_address: address
+  });
+
+  if(orderErr){ showToast(t('toastError')); return; }
+
+  document.getElementById('orderSheetContent').innerHTML = `
+    <div class="order-confirm">
+      <div class="big">✅</div>
+      <h4>${t('orderDoneTitle')}</h4>
+      <p>${t('orderDoneText')}</p>
+      <div class="vendor-contact">
+        <div class="vc-label">${t('vcLabel')}</div>
+        <div class="vc-phone">${v.phone}</div>
+      </div>
+      <div class="contact-actions">
+        <a href="tel:${v.phone}"><button class="btn btn-primary" style="width:100%">${t('btnCall')}</button></a>
+        <a href="https://wa.me/${v.phone.replace(/[^0-9]/g,'')}" target="_blank"><button class="btn btn-ghost" style="width:100%;color:var(--navy);background:#E7F8EE;border:1px solid #cdeedc;">${t('btnWhatsapp')}</button></a>
+      </div>
+      <button class="btn btn-close" style="width:100%;margin-top:10px;" onclick="closeOrderSheet()">${t('btnClose')}</button>
+    </div>
+  `;
+}
+
+function openMyOrdersSheet(){ document.getElementById('myOrdersOverlay').classList.add('show'); }
+function closeMyOrdersSheet(){ document.getElementById('myOrdersOverlay').classList.remove('show'); }
+
+async function lookupMyOrders(){
+  const phone = document.getElementById('lookup_phone').value.trim();
+  const listEl = document.getElementById('myOrdersList');
+  if(!phone){ showToast(t('toastFill')); return; }
+
+  listEl.innerHTML = '<div class="empty">…</div>';
+
+  const { data: cust } = await sb.from('customers').select('id').eq('phone', phone).maybeSingle();
+  if(!cust){ listEl.innerHTML = `<div class="empty">${t('noOrders')}</div>`; return; }
+
+  const { data: orders, error } = await sb.from('orders')
+    .select('*, products(name, price), vendors(business_name, phone)')
+    .eq('customer_id', cust.id)
+    .order('created_at', {ascending:false});
+
+  if(error || !orders || orders.length===0){
+    listEl.innerHTML = `<div class="empty">${t('noOrders')}</div>`;
+    return;
+  }
+
+  const payLabel = {pending:t('payPending'), paid:t('payPaid'), failed:t('payPending')};
+  const delivLabel = {pending:t('delivPending'), processing:t('delivProcessing'), shipped:t('delivShipped'), delivered:t('delivDelivered')};
+
+  listEl.innerHTML = orders.map(o=>`
+    <div class="vendor-card">
+      <div class="v-top">
+        <div class="v-name">${o.products?.name || ''}</div>
+        <div class="v-tag" style="background:var(--navy)">${delivLabel[o.delivery_status]}</div>
+      </div>
+      <div style="font-size:12.5px;color:var(--muted);margin-top:6px;line-height:1.6;">
+        ${o.vendors?.business_name || ''} · ${o.vendors?.phone || ''}<br>
+        Tsh ${Number(o.total_price).toLocaleString()} · ${payLabel[o.payment_status]}
+      </div>
+    </div>
+  `).join('');
+}
+
+(async function init(){
+  applyI18n();
+  await loadCategories();
+  await loadCategoryCounts();
+  renderStalls();
+  await loadVendors();
+  renderFeaturedSlideshow(lastVendorsData);
+})();
+
+const GATE_CODE = "ECK2026";
+
+function checkGateCode(){
+  const input = document.getElementById('gateCode').value.trim();
+  const errEl = document.getElementById('gateError');
+  if(input === GATE_CODE){
+    sessionStorage.setItem('eck_gate_unlocked', 'yes');
+    document.getElementById('siteGate').style.display = 'none';
+    document.getElementById('siteContent').style.display = 'block';
+    startBackgroundMusic();
+  } else {
+    errEl.style.display = 'block';
+  }
+}
+
+document.getElementById('gateCode')?.addEventListener('keydown', (e)=>{
+  if(e.key === 'Enter') checkGateCode();
+});
+
+function startBackgroundMusic(){
+  const audio = document.getElementById('bgMusic');
+  const btn = document.getElementById('musicToggle');
+  if(!audio || !audio.paused) return;
+  audio.volume = 0.55;
+  audio.play().then(()=>{
+    btn.textContent = '🔇';
+    btn.classList.add('playing');
+  }).catch(()=>{ /* mtandao ulizuia autoplay, itaanza kwa mgusano wa kwanza */ });
+}
+
+// Anzisha muziki papo hapo kwa mgusano wa kwanza wa mtumiaji (inashughulikia autoplay policy ya browser)
+let musicAutoStartAttempted = false;
+function attemptAutoStartOnFirstTouch(){
+  if(musicAutoStartAttempted) return;
+  musicAutoStartAttempted = true;
+  startBackgroundMusic();
+}
+document.addEventListener('click', attemptAutoStartOnFirstTouch, { once:true });
+document.addEventListener('touchstart', attemptAutoStartOnFirstTouch, { once:true });
+
+(function checkGateOnLoad(){
+  if(sessionStorage.getItem('eck_gate_unlocked') === 'yes'){
+    document.getElementById('siteGate').style.display = 'none';
+    document.getElementById('siteContent').style.display = 'block';
+  }
+})();
+</script>
+</div>
+</body>
+</html>

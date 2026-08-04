@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>ECK MARKET DSM · Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --ink:#182339; --navy:#1B2A4A; --gold:#F5A623; --green:#1F9D55; --coral:#E8542A;
+    --paper:#FAF8F1; --card:#FFFFFF; --line:#E7E0D1; --muted:#6B7280;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{font-family:'Inter',sans-serif; background:var(--paper); color:var(--ink); -webkit-font-smoothing:antialiased;}
+  h1,h2,.brand{font-family:'Baloo 2',sans-serif;}
+
+  header{
+    background:var(--navy); color:#fff; padding:14px 18px;
+    display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:30;
+  }
+  .brand{font-size:18px; font-weight:800; display:flex; align-items:center; gap:8px;}
+  .brand .dot{width:9px; height:9px; border-radius:50%; background:var(--gold);}
+  .logout{background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.3); color:#fff; padding:7px 12px; border-radius:9px; font-size:12.5px; font-weight:600; cursor:pointer;}
+
+  .login-wrap{min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px;}
+  .login-card{background:#fff; border-radius:18px; padding:28px 22px; width:100%; max-width:360px; border:1px solid var(--line);}
+  .login-card h1{font-size:21px; margin-bottom:4px;}
+  .login-card p{font-size:13px; color:var(--muted); margin-bottom:20px;}
+  .field{margin-bottom:13px;}
+  .field label{display:block; font-size:12.5px; font-weight:600; margin-bottom:5px;}
+  .field input{width:100%; padding:12px 13px; border-radius:10px; border:1.5px solid var(--line); font-size:14px; background:var(--paper);}
+  .field input:focus{outline:none; border-color:var(--navy);}
+  .pw-wrap{position:relative;}
+  .pw-wrap input{padding-right:70px;}
+  .pw-toggle{
+    position:absolute; right:6px; top:50%; transform:translateY(-50%);
+    background:var(--paper); border:1px solid var(--line); border-radius:7px;
+    padding:6px 9px; font-size:11px; font-weight:700; color:var(--navy); cursor:pointer;
+    font-family:'Inter',sans-serif;
+  }
+  .btn{border:none; border-radius:12px; padding:12px 18px; font-weight:700; font-size:14px; cursor:pointer; width:100%; font-family:'Inter',sans-serif;}
+  .btn-primary{background:var(--gold); color:var(--navy);}
+  .error-msg{color:var(--coral); font-size:12.5px; margin-top:8px; display:none;}
+
+  .stats{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; padding:16px 18px 4px;}
+  .stat{background:#fff; border:1px solid var(--line); border-radius:14px; padding:14px 10px; text-align:center;}
+  .stat .num{font-size:22px; font-weight:800; font-family:'Baloo 2',sans-serif;}
+  .stat .lbl{font-size:11px; color:var(--muted); margin-top:2px;}
+  .stat.pending .num{color:var(--coral);}
+  .stat.active .num{color:var(--green);}
+
+  section{padding:18px;}
+  .section-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;}
+  .section-head h2{font-size:17px;}
+  .tabs{display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap;}
+  .tab{background:#fff; border:1px solid var(--line); padding:8px 14px; border-radius:99px; font-size:12.5px; font-weight:700; cursor:pointer; color:var(--muted);}
+  .tab.active{background:var(--navy); color:#fff; border-color:var(--navy);}
+
+  .vcard{background:#fff; border:1px solid var(--line); border-radius:14px; padding:14px; margin-bottom:11px;}
+  .vcard .row1{display:flex; justify-content:space-between; align-items:flex-start;}
+  .vcard .name{font-weight:700; font-size:15px;}
+  .vcard .meta{font-size:12px; color:var(--muted); margin-top:3px; line-height:1.5;}
+  .badge{font-size:10.5px; font-weight:700; padding:3px 9px; border-radius:99px; white-space:nowrap;}
+  .badge.pending{background:#FFF0E5; color:var(--coral);}
+  .badge.active{background:#E7F8EE; color:var(--green);}
+  .badge.expired{background:#F1F1F1; color:var(--muted);}
+  .badge.suspended{background:#FDE8E8; color:#C0392B;}
+  .vactions{display:flex; gap:8px; margin-top:12px;}
+  .vbtn{flex:1; border:none; border-radius:9px; padding:9px; font-size:12.5px; font-weight:700; cursor:pointer;}
+  .vbtn.approve{background:var(--green); color:#fff;}
+  .vbtn.reject{background:#fff; color:var(--coral); border:1.5px solid var(--coral);}
+  .vbtn.expire{background:#fff; color:var(--muted); border:1.5px solid var(--line);}
+  .vbtn.renew{background:var(--gold); color:var(--navy);}
+  .empty{text-align:center; padding:30px 16px; color:var(--muted); font-size:13.5px;}
+  .ocard{background:#fff; border:1px solid var(--line); border-radius:14px; padding:14px; margin-bottom:11px;}
+  .ocard .oname{font-weight:700; font-size:14.5px;}
+  .ocard .ometa{font-size:12px; color:var(--muted); margin-top:3px; line-height:1.6;}
+  .oselects{display:flex; gap:8px; margin-top:10px;}
+  .oselects select{flex:1; padding:8px 9px; border-radius:9px; border:1.5px solid var(--line); font-size:12px; font-family:'Inter',sans-serif; background:var(--paper);}
+</style>
+</head>
+<body>
+
+<div id="loginScreen" class="login-wrap">
+  <div class="login-card">
+    <h1>ECK MARKET DSM</h1>
+    <p>Dashboard ya Admin — ingia kusimamia wachuuzi.</p>
+    <div class="field">
+      <label>Email</label>
+      <input type="email" id="loginEmail" placeholder="email yako">
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <div class="pw-wrap">
+        <input type="password" id="loginPassword" placeholder="password yako">
+        <button type="button" class="pw-toggle" onclick="togglePassword()" id="pwToggleBtn">Onyesha</button>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="login()">Ingia</button>
+    <div class="error-msg" id="loginError"></div>
+  </div>
+</div>
+
+<div id="dashboard" style="display:none;">
+  <header>
+    <div class="brand"><span class="dot"></span>ECK MARKET DSM · Admin</div>
+    <button class="logout" onclick="logout()">Toka</button>
+  </header>
+
+  <div class="stats">
+    <div class="stat pending"><div class="num" id="statPending">0</div><div class="lbl">Wanasubiri</div></div>
+    <div class="stat active"><div class="num" id="statActive">0</div><div class="lbl">Hai</div></div>
+    <div class="stat"><div class="num" id="statTotal">0</div><div class="lbl">Jumla</div></div>
+  </div>
+
+  <section>
+    <div class="section-head"><h2>Wachuuzi</h2></div>
+    <div class="tabs">
+      <div class="tab active" data-status="pending" onclick="setTab('pending')">Wanasubiri</div>
+      <div class="tab" data-status="active" onclick="setTab('active')">Hai</div>
+      <div class="tab" data-status="expired" onclick="setTab('expired')">Muda umeisha</div>
+      <div class="tab" data-status="all" onclick="setTab('all')">Wote</div>
+    </div>
+    <div id="vendorsList"><div class="empty">Inapakia…</div></div>
+  </section>
+
+  <section>
+    <div class="section-head"><h2>Maagizo ya Wateja</h2><span id="ordersCount"></span></div>
+    <div id="ordersList"><div class="empty">Inapakia…</div></div>
+  </section>
+</div>
+
+<script>
+const SUPABASE_URL = "https://plxmjbscgyhkahisjgzc.supabase.co";
+const SUPABASE_KEY = "sb_publishable_7erIyzDiTVwL8HbyN9eBYg_RLfzWbuv";
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let allVendors = [];
+let categories = [];
+let currentTab = 'pending';
+
+function togglePassword(){
+  const input = document.getElementById('loginPassword');
+  const btn = document.getElementById('pwToggleBtn');
+  if(input.type === 'password'){
+    input.type = 'text';
+    btn.textContent = 'Ficha';
+  } else {
+    input.type = 'password';
+    btn.textContent = 'Onyesha';
+  }
+}
+
+async function login(){
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  const errEl = document.getElementById('loginError');
+  errEl.style.display = 'none';
+
+  const { data, error } = await sb.auth.signInWithPassword({ email, password });
+  if(error){
+    errEl.textContent = 'Email au password si sahihi.';
+    errEl.style.display = 'block';
+    return;
+  }
+  showDashboard();
+}
+
+async function logout(){
+  await sb.auth.signOut();
+  document.getElementById('dashboard').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'flex';
+}
+
+async function showDashboard(){
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'block';
+  await loadCategories();
+  await loadVendors();
+  await loadOrders();
+}
+
+async function loadCategories(){
+  const { data } = await sb.from('categories').select('*');
+  categories = data || [];
+}
+
+async function loadVendors(){
+  const { data, error } = await sb.from('vendors').select('*, subscriptions(*)').order('created_at', {ascending:false});
+  if(error){ console.error(error); document.getElementById('vendorsList').innerHTML = '<div class="empty">Huna ruhusa au tatizo la muunganiko.</div>'; return; }
+  allVendors = data || [];
+  renderStats();
+  renderVendors();
+}
+
+function renderStats(){
+  document.getElementById('statPending').textContent = allVendors.filter(v=>v.status==='pending').length;
+  document.getElementById('statActive').textContent = allVendors.filter(v=>v.status==='active').length;
+  document.getElementById('statTotal').textContent = allVendors.length;
+}
+
+function setTab(tab){
+  currentTab = tab;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active', t.getAttribute('data-status')===tab));
+  renderVendors();
+}
+
+function renderVendors(){
+  const list = currentTab==='all' ? allVendors : allVendors.filter(v=>v.status===currentTab);
+  const el = document.getElementById('vendorsList');
+
+  if(list.length===0){
+    el.innerHTML = '<div class="empty">Hakuna wachuuzi hapa kwa sasa.</div>';
+    return;
+  }
+
+  el.innerHTML = list.map(v=>{
+    const cat = categories.find(c=>c.id===v.category_id);
+    let actions = '';
+    if(v.status==='pending'){
+      actions = `
+        <div class="vactions">
+          <button class="vbtn approve" onclick="approveVendor('${v.id}')">Idhinisha</button>
+          <button class="vbtn reject" onclick="rejectVendor('${v.id}')">Kataa</button>
+        </div>`;
+    } else if(v.status==='active'){
+      actions = `
+        <div class="vactions">
+          <button class="vbtn renew" onclick="showPin('${v.id}')">Onyesha PIN</button>
+          <button class="vbtn expire" onclick="expireVendor('${v.id}')">Simamisha</button>
+        </div>`;
+    } else if(v.status==='expired' || v.status==='suspended'){
+      actions = `
+        <div class="vactions">
+          <button class="vbtn renew" onclick="approveVendor('${v.id}')">Rejesha</button>
+        </div>`;
+    }
+    return `
+      <div class="vcard">
+        <div class="row1">
+          <div>
+            <div class="name">${v.business_name}</div>
+            <div class="meta">${v.full_name} · ${v.phone}<br>${cat ? cat.name_sw : '—'}</div>
+          </div>
+          <span class="badge ${v.status}">${statusLabel(v.status)}</span>
+        </div>
+        ${actions}
+      </div>`;
+  }).join('');
+}
+
+function statusLabel(s){
+  return {pending:'Anasubiri', active:'Hai', expired:'Muda Umeisha', suspended:'Amesimamishwa'}[s] || s;
+}
+
+async function approveVendor(id){
+  const expires = new Date();
+  expires.setMonth(expires.getMonth()+1);
+  const expiresStr = expires.toISOString().slice(0,10);
+
+  const { error } = await sb.from('vendors').update({
+    status:'active', subscription_expires_at: expiresStr
+  }).eq('id', id);
+
+  if(error){ alert('Tatizo: ' + error.message); return; }
+
+  const today = new Date().toISOString().slice(0,10);
+  await sb.from('subscriptions').insert({
+    vendor_id:id, amount:10000, period_start:today, period_end:expiresStr, status:'paid', payment_method:'manual'
+  });
+
+  // Generate a 4-digit PIN so the vendor can log into their dashboard
+  const pin = String(Math.floor(1000 + Math.random()*9000));
+  const { error: pinError } = await sb.from('vendor_pins').upsert({ vendor_id:id, pin });
+  if(!pinError){
+    alert('Muuzaji ameidhinishwa!\n\nMpigie na umwambie PIN yake ya kuingia kwenye Vendor Dashboard:\n\nPIN: ' + pin);
+  }
+
+  await loadVendors();
+}
+
+async function loadOrders(){
+  const el = document.getElementById('ordersList');
+  const countEl = document.getElementById('ordersCount');
+  el.innerHTML = '<div class="empty">Inapakia…</div>';
+
+  const { data, error } = await sb.from('orders')
+    .select('*, products(name), vendors(business_name), customers(full_name, phone)')
+    .order('created_at', {ascending:false})
+    .limit(50);
+
+  if(error){ el.innerHTML = '<div class="empty">Tatizo la muunganiko.</div>'; return; }
+
+  countEl.textContent = data && data.length ? data.length : '';
+
+  if(!data || data.length===0){
+    el.innerHTML = '<div class="empty">Hakuna maagizo bado.</div>';
+    return;
+  }
+
+  el.innerHTML = data.map(o=>`
+    <div class="ocard">
+      <div class="oname">${o.products?.name || ''} — Tsh ${Number(o.total_price).toLocaleString()}</div>
+      <div class="ometa">
+        Mteja: ${o.customers?.full_name || ''} · ${o.customers?.phone || ''}<br>
+        Muuzaji: ${o.vendors?.business_name || ''}<br>
+        Anwani: ${o.delivery_address || '—'}
+      </div>
+      <div class="oselects">
+        <select onchange="updateOrder('${o.id}', 'payment_status', this.value)">
+          <option value="pending" ${o.payment_status==='pending'?'selected':''}>Malipo: Yanasubiri</option>
+          <option value="paid" ${o.payment_status==='paid'?'selected':''}>Malipo: Imelipwa</option>
+          <option value="failed" ${o.payment_status==='failed'?'selected':''}>Malipo: Imeshindikana</option>
+        </select>
+        <select onchange="updateOrder('${o.id}', 'delivery_status', this.value)">
+          <option value="pending" ${o.delivery_status==='pending'?'selected':''}>Inasubiri</option>
+          <option value="processing" ${o.delivery_status==='processing'?'selected':''}>Inaandaliwa</option>
+          <option value="shipped" ${o.delivery_status==='shipped'?'selected':''}>Imetumwa</option>
+          <option value="delivered" ${o.delivery_status==='delivered'?'selected':''}>Imefika</option>
+        </select>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function updateOrder(id, field, value){
+  const patch = {}; patch[field] = value;
+  const { error } = await sb.from('orders').update(patch).eq('id', id);
+  if(error){ alert('Tatizo: ' + error.message); }
+}
+
+async function showPin(id){
+  const { data, error } = await sb.from('vendor_pins').select('pin').eq('vendor_id', id).single();
+  if(error || !data){ alert('PIN haipatikani.'); return; }
+  alert('PIN ya muuzaji: ' + data.pin);
+}
+
+async function rejectVendor(id){
+  if(!confirm('Una uhakika unataka kukataa muuzaji huyu?')) return;
+  const { error } = await sb.from('vendors').update({ status:'suspended' }).eq('id', id);
+  if(error){ alert('Tatizo: ' + error.message); return; }
+  await loadVendors();
+}
+
+async function expireVendor(id){
+  if(!confirm('Simamisha duka hili sokoni?')) return;
+  const { error } = await sb.from('vendors').update({ status:'expired' }).eq('id', id);
+  if(error){ alert('Tatizo: ' + error.message); return; }
+  await loadVendors();
+}
+
+(async function init(){
+  const { data:{ session } } = await sb.auth.getSession();
+  if(session){ showDashboard(); }
+})();
+</script>
+</body>
+</html>

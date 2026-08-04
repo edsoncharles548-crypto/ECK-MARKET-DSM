@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>ECK MARKET DSM · Duka Langu</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --ink:#182339; --navy:#1B2A4A; --gold:#F5A623; --green:#1F9D55; --coral:#E8542A;
+    --paper:#FAF8F1; --card:#FFFFFF; --line:#E7E0D1; --muted:#6B7280;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{font-family:'Inter',sans-serif; background:var(--paper); color:var(--ink); -webkit-font-smoothing:antialiased; padding-bottom:90px;}
+  h1,h2,.brand{font-family:'Baloo 2',sans-serif;}
+
+  header{
+    background:var(--navy); color:#fff; padding:14px 18px;
+    display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:30;
+  }
+  .brand{font-size:17px; font-weight:800; display:flex; align-items:center; gap:8px;}
+  .brand .dot{width:9px; height:9px; border-radius:50%; background:var(--gold);}
+  .logout{background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.3); color:#fff; padding:7px 12px; border-radius:9px; font-size:12.5px; font-weight:600; cursor:pointer;}
+
+  .login-wrap{min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px;}
+  .login-card{background:#fff; border-radius:18px; padding:28px 22px; width:100%; max-width:360px; border:1px solid var(--line);}
+  .login-card h1{font-size:21px; margin-bottom:4px;}
+  .login-card p{font-size:13px; color:var(--muted); margin-bottom:20px; line-height:1.5;}
+  .field{margin-bottom:13px;}
+  .field label{display:block; font-size:12.5px; font-weight:600; margin-bottom:5px;}
+  .field input, .field textarea{width:100%; padding:12px 13px; border-radius:10px; border:1.5px solid var(--line); font-size:14px; background:var(--paper); font-family:'Inter',sans-serif;}
+  .field input:focus, .field textarea:focus{outline:none; border-color:var(--navy);}
+  .pw-wrap{position:relative;}
+  .pw-wrap input{padding-right:70px;}
+  .pw-toggle{
+    position:absolute; right:6px; top:50%; transform:translateY(-50%);
+    background:var(--paper); border:1px solid var(--line); border-radius:7px;
+    padding:6px 9px; font-size:11px; font-weight:700; color:var(--navy); cursor:pointer;
+    font-family:'Inter',sans-serif;
+  }
+  .btn{border:none; border-radius:12px; padding:12px 18px; font-weight:700; font-size:14px; cursor:pointer; width:100%; font-family:'Inter',sans-serif;}
+  .btn-primary{background:var(--gold); color:var(--navy);}
+  .error-msg{color:var(--coral); font-size:12.5px; margin-top:8px; display:none;}
+
+  .banner{padding:16px 18px; background:#fff; border-bottom:1px solid var(--line);}
+  .banner .shop{font-size:19px; font-weight:800; font-family:'Baloo 2',sans-serif;}
+  .banner .cat{font-size:12.5px; color:var(--muted); margin-top:2px;}
+  .status-pill{display:inline-block; font-size:11px; font-weight:700; padding:3px 10px; border-radius:99px; margin-top:8px;}
+  .status-pill.active{background:#E7F8EE; color:var(--green);}
+  .status-pill.expired{background:#F1F1F1; color:var(--muted);}
+  .status-pill.suspended{background:#FDE8E8; color:#C0392B;}
+  .expiry-note{font-size:11.5px; color:var(--muted); margin-top:4px;}
+
+  section{padding:18px;}
+  .section-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;}
+  .section-head h2{font-size:17px;}
+
+  .pcard{background:#fff; border:1px solid var(--line); border-radius:14px; padding:12px; margin-bottom:11px; display:flex; gap:12px;}
+  .pcard .ph{width:56px; height:56px; border-radius:10px; background:linear-gradient(135deg,#eee,#ddd); display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0;}
+  .pcard .info{flex:1; min-width:0;}
+  .pcard .pname{font-weight:700; font-size:14.5px;}
+  .pcard .pprice{font-size:13px; color:var(--green); font-weight:700; margin-top:2px;}
+  .pcard .pdesc{font-size:12px; color:var(--muted); margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .pactions{display:flex; gap:6px; margin-top:8px;}
+  .mini-btn{border:none; border-radius:8px; padding:6px 10px; font-size:11.5px; font-weight:700; cursor:pointer;}
+  .mini-btn.stock{background:#EEF2FF; color:#3730A3;}
+  .mini-btn.stock.out{background:#F1F1F1; color:var(--muted);}
+  .mini-btn.del{background:#FDE8E8; color:#C0392B;}
+
+  .empty{text-align:center; padding:34px 16px; color:var(--muted); font-size:13.5px; line-height:1.6;}
+
+  .zoom-overlay{
+    position:fixed; inset:0; background:rgba(10,14,25,.96); z-index:120;
+    display:none; align-items:center; justify-content:center; flex-direction:column;
+    padding:20px; touch-action:pan-y;
+  }
+  .zoom-overlay.show{display:flex;}
+  .zoom-stage{width:100%; display:flex; align-items:center; justify-content:center; cursor:grab; user-select:none;}
+  .zoom-stage:active{cursor:grabbing;}
+  .zoom-image{
+    max-width:100%; max-height:70vh; object-fit:contain; border-radius:10px;
+    transition:transform .2s ease; transform:scale(1); pointer-events:none;
+  }
+  .zoom-image.zoomed{transform:scale(2.2);}
+  .zoom-close{
+    position:absolute; top:18px; right:18px; width:38px; height:38px; border-radius:50%;
+    background:rgba(255,255,255,.15); color:#fff; border:1px solid rgba(255,255,255,.3);
+    font-size:16px; cursor:pointer; z-index:2;
+  }
+  .zoom-caption{color:#fff; font-size:14px; font-weight:600; margin-bottom:14px; text-align:center; font-family:'Baloo 2',sans-serif;}
+  .zoom-hint{color:rgba(255,255,255,.6); font-size:11.5px; margin-top:14px; text-align:center;}
+  .zoom-dots{display:flex; gap:6px; justify-content:center; margin-top:16px;}
+  .zdot{width:7px; height:7px; border-radius:50%; background:rgba(255,255,255,.3);}
+  .zdot.active{background:var(--gold);}
+  .empty .big{font-size:34px; margin-bottom:6px;}
+
+  .fab{
+    position:fixed; bottom:18px; left:18px; right:18px; z-index:50;
+    background:var(--coral); color:#fff; border:none; border-radius:14px;
+    padding:15px; font-weight:700; font-size:15px; font-family:'Inter',sans-serif;
+    box-shadow:0 8px 22px rgba(232,84,42,.35); cursor:pointer;
+  }
+  .fab-row{position:fixed; bottom:18px; left:18px; right:18px; z-index:50; display:flex; gap:10px;}
+  .fab-row .fab{position:static; flex:1;}
+  .fab-secondary{background:var(--navy); box-shadow:0 8px 22px rgba(27,42,74,.35);}
+
+  .bulk-item{display:flex; gap:10px; background:var(--paper); border:1px solid var(--line); border-radius:12px; padding:10px; margin-bottom:10px;}
+  .bulk-item .bthumb{width:52px; height:52px; border-radius:8px; object-fit:cover; flex-shrink:0; background:#eee;}
+  .bulk-item .bfields{flex:1; display:flex; flex-direction:column; gap:6px;}
+  .bulk-item .bfields input, .bulk-item .bfields select{
+    padding:8px 9px; border-radius:8px; border:1.5px solid var(--line); font-size:12.5px; font-family:'Inter',sans-serif; background:#fff;
+  }
+  .bulk-item .brow{display:flex; gap:6px;}
+  .bulk-item .bstatus{font-size:11px; font-weight:700; margin-top:2px;}
+  .bulk-item .bstatus.ok{color:var(--green);}
+  .bulk-item .bstatus.fail{color:var(--coral);}
+  .bulk-progress{text-align:center; font-size:13px; color:var(--muted); margin-top:12px; font-weight:600;}
+  .bulk-count{font-size:12px; color:var(--muted); margin-bottom:10px;}
+
+  .overlay{position:fixed; inset:0; background:rgba(15,20,35,.55); z-index:60; display:none; align-items:flex-end; justify-content:center;}
+  .overlay.show{display:flex;}
+  .sheet{background:#fff; width:100%; max-width:480px; border-radius:20px 20px 0 0; padding:22px 20px 26px; max-height:88vh; overflow-y:auto;}
+  .sheet h3{font-size:19px; margin-bottom:14px;}
+  .sheet-actions{display:flex; gap:10px; margin-top:6px;}
+  .btn-close{background:var(--paper); color:var(--ink); border:1px solid var(--line);}
+
+  .suspend-note{background:#FDE8E8; border:1px solid #F3B4B4; border-radius:12px; padding:16px; font-size:13px; color:#8B2020; line-height:1.6; margin:18px;}
+
+  .toast{
+    position:fixed; top:70px; left:50%; transform:translateX(-50%); z-index:80;
+    background:var(--ink); color:#fff; padding:11px 18px; border-radius:10px; font-size:13.5px;
+    font-weight:600; opacity:0; transition:opacity .25s ease; pointer-events:none;
+  }
+  .toast.show{opacity:1;}
+</style>
+</head>
+<body>
+
+<div id="loginScreen" class="login-wrap">
+  <div class="login-card">
+    <h1>Duka Langu</h1>
+    <p>Ingia na namba yako ya simu na PIN uliyopewa na ECK MARKET DSM baada ya kuidhinishwa.</p>
+    <div class="field">
+      <label>Namba ya simu</label>
+      <input type="tel" id="loginPhone" placeholder="0712 345 678">
+    </div>
+    <div class="field">
+      <label>PIN (tarakimu 4)</label>
+      <div class="pw-wrap">
+        <input type="password" id="loginPin" inputmode="numeric" maxlength="4" placeholder="0000">
+        <button type="button" class="pw-toggle" onclick="togglePin()" id="pinToggleBtn">Onyesha</button>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="login()">Ingia Dukani</button>
+    <div class="error-msg" id="loginError"></div>
+  </div>
+</div>
+
+<div id="dashboard" style="display:none;">
+  <header>
+    <div class="brand"><span class="dot"></span>Duka Langu</div>
+    <button class="logout" onclick="logout()">Toka</button>
+  </header>
+
+  <div class="banner">
+    <div class="shop" id="shopName">—</div>
+    <div class="cat" id="shopCat">—</div>
+    <span class="status-pill" id="statusPill">—</span>
+    <div class="expiry-note" id="expiryNote"></div>
+  </div>
+
+  <div id="suspendedNote" style="display:none;" class="suspend-note">
+    Duka lako halionekani sokoni kwa sasa. Wasiliana na ECK MARKET DSM ili kufufua au kulipia upya ada ya mwezi.
+  </div>
+
+  <section id="productsSection">
+    <div class="section-head"><h2>Bidhaa Zangu</h2></div>
+    <div id="productsList"><div class="empty">Inapakia…</div></div>
+  </section>
+
+  <div class="fab-row">
+    <button class="fab fab-secondary" onclick="openBulkSheet()">📦 Pakia Nyingi</button>
+    <button class="fab" onclick="openAddSheet()">+ Ongeza Bidhaa</button>
+  </div>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="sheet">
+    <h3 id="sheetTitle">Ongeza Bidhaa</h3>
+    <div class="field">
+      <label>Jina la bidhaa</label>
+      <input type="text" id="p_name" placeholder="Mfano: Kanga ya Kitenge">
+    </div>
+    <div class="field">
+      <label>Maelezo mafupi</label>
+      <textarea id="p_desc" rows="2" placeholder="Mfano: Rangi mbalimbali, ubora wa hali ya juu"></textarea>
+    </div>
+    <div class="field" id="subcatField" style="display:none;">
+      <label>Aina (sehemu ndogo)</label>
+      <select id="p_subcat"></select>
+    </div>
+    <div class="field">
+      <label>Bei (Tsh)</label>
+      <input type="number" id="p_price" placeholder="15000">
+    </div>
+    <div class="field">
+      <label>Picha za bidhaa — pembe tofauti (hadi 6, ili mteja azungushe kuona pande zote)</label>
+      <input type="file" id="p_image" accept="image/*" multiple>
+    </div>
+    <div class="sheet-actions">
+      <button class="btn btn-close" onclick="closeAddSheet()">Ghairi</button>
+      <button class="btn btn-primary" style="flex:1" onclick="saveProduct()">Hifadhi</button>
+    </div>
+  </div>
+</div>
+
+<!-- Bulk upload sheet -->
+<div class="overlay" id="bulkOverlay">
+  <div class="sheet">
+    <h3>Pakia Bidhaa Nyingi</h3>
+    <p class="sub">Chagua picha nyingi za bidhaa zako mara moja (hadi 200). Kila picha itakuwa bidhaa moja — jaza jina na bei kwa kila moja kisha uhifadhi zote.</p>
+    <div class="field">
+      <label>Chagua picha (unaweza kuchagua nyingi mara moja)</label>
+      <input type="file" id="bulk_files" accept="image/*" multiple onchange="handleBulkFiles()">
+    </div>
+    <div id="bulkList"></div>
+    <div class="sheet-actions" id="bulkActions" style="display:none;">
+      <button class="btn btn-close" onclick="closeBulkSheet()">Ghairi</button>
+      <button class="btn btn-primary" style="flex:1" onclick="saveBulkProducts()">Hifadhi Zote</button>
+    </div>
+    <div id="bulkProgress" style="display:none;" class="bulk-progress"></div>
+  </div>
+</div>
+
+<!-- Image zoom viewer -->
+<div class="zoom-overlay" id="zoomOverlay" onclick="closeImageZoomOnBg(event)">
+  <button class="zoom-close" onclick="closeImageZoom()">✕</button>
+  <div class="zoom-caption" id="zoomCaption"></div>
+  <div class="zoom-stage" id="zoomStage">
+    <img id="zoomImage" class="zoom-image" src="" draggable="false" ondblclick="toggleZoomScale()">
+  </div>
+  <div class="zoom-dots" id="zoomDots"></div>
+  <div class="zoom-hint" id="zoomHint">Sogeza kidole kushoto/kulia kuzungusha · gusa mara mbili kukuza</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SUPABASE_URL = "https://plxmjbscgyhkahisjgzc.supabase.co";
+const SUPABASE_KEY = "sb_publishable_7erIyzDiTVwL8HbyN9eBYg_RLfzWbuv";
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let session = null; // { phone, pin, vendor }
+let editingProductId = null;
+let categories = [];
+
+const SUBCATS = {
+  nguo: ['Wanaume','Wanawake','Watoto','Vitenge/Kanga','Madera','Suti','Kofia','Mabegi','Mikoba ya Wamama','Mavazi ya Ndani'],
+  viatu: ['Wanaume','Wanawake','Watoto','Michezo (Sneakers)'],
+  simu: ['Vipochi (Cases)','Chaja','Vipokea Sauti','Screen Protector','Power Bank'],
+  'tv-spea': ['TV','Spika','Vipuri/Remote','Antena'],
+  'baiskeli-pikipiki': ['Baiskeli', 'Pikipiki', 'Bajaji (Tuk-tuk)', 'Vipuri/Spea', 'Chaja/Betri']
+};
+
+async function loadCategories(){
+  const { data } = await sb.from('categories').select('*');
+  categories = data || [];
+}
+
+let zoomImages = [];
+let zoomIndex = 0;
+const ZOOM_STEP_PX = 40;
+
+function openImageZoom(images, name){
+  zoomImages = (Array.isArray(images) ? images : [images]).filter(Boolean);
+  if(zoomImages.length===0) return;
+  zoomIndex = 0;
+  document.getElementById('zoomCaption').textContent = name || '';
+  document.getElementById('zoomImage').classList.remove('zoomed');
+  renderZoomImage();
+  renderZoomDots();
+  document.getElementById('zoomHint').style.display = zoomImages.length>1 ? 'block':'none';
+  document.getElementById('zoomOverlay').classList.add('show');
+}
+function renderZoomImage(){ document.getElementById('zoomImage').src = zoomImages[zoomIndex]; }
+function renderZoomDots(){
+  const dotsEl = document.getElementById('zoomDots');
+  if(zoomImages.length<=1){ dotsEl.innerHTML=''; return; }
+  dotsEl.innerHTML = zoomImages.map((_,i)=>`<span class="zdot ${i===zoomIndex?'active':''}"></span>`).join('');
+}
+function closeImageZoom(){ document.getElementById('zoomOverlay').classList.remove('show'); }
+function closeImageZoomOnBg(e){ if(e.target.id === 'zoomOverlay'){ closeImageZoom(); } }
+function toggleZoomScale(){ document.getElementById('zoomImage').classList.toggle('zoomed'); }
+
+(function setupZoomDrag(){
+  const stage = document.getElementById('zoomStage');
+  if(!stage) return;
+  let startX = null, accum = 0;
+  function stepIfNeeded(){
+    if(Math.abs(accum) >= ZOOM_STEP_PX && zoomImages.length>1){
+      const dir = accum > 0 ? -1 : 1;
+      zoomIndex = (zoomIndex + dir + zoomImages.length) % zoomImages.length;
+      renderZoomImage(); renderZoomDots(); accum = 0;
+    }
+  }
+  stage.addEventListener('touchstart', e=>{ startX = e.touches[0].clientX; accum = 0; });
+  stage.addEventListener('touchmove', e=>{
+    if(startX===null) return;
+    const x = e.touches[0].clientX; accum += x - startX; startX = x; stepIfNeeded();
+  });
+  stage.addEventListener('touchend', ()=>{ startX=null; accum=0; });
+  stage.addEventListener('mousedown', e=>{ startX = e.clientX; accum = 0; e.preventDefault(); });
+  window.addEventListener('mousemove', e=>{
+    if(startX===null) return;
+    accum += e.clientX - startX; startX = e.clientX; stepIfNeeded();
+  });
+  window.addEventListener('mouseup', ()=>{ startX=null; accum=0; });
+})();
+
+function showToast(msg){
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'), 2600);
+}
+
+function togglePin(){
+  const input = document.getElementById('loginPin');
+  const btn = document.getElementById('pinToggleBtn');
+  if(input.type === 'password'){
+    input.type = 'text';
+    btn.textContent = 'Ficha';
+  } else {
+    input.type = 'password';
+    btn.textContent = 'Onyesha';
+  }
+}
+
+async function login(){
+  const phone = document.getElementById('loginPhone').value.trim();
+  const pin = document.getElementById('loginPin').value.trim();
+  const errEl = document.getElementById('loginError');
+  errEl.style.display = 'none';
+
+  if(!phone || !pin){
+    errEl.textContent = 'Jaza namba ya simu na PIN.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  let data, error;
+  try{
+    const result = await sb.rpc('vendor_login', { p_phone: phone, p_pin: pin });
+    data = result.data;
+    error = result.error;
+  } catch(networkErr){
+    errEl.textContent = 'Mtandao ni dhaifu au haufanyi kazi. Angalia muunganiko wako na ujaribu tena.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  if(error){
+    errEl.textContent = 'Tatizo la muunganiko. Angalia mtandao wako na ujaribu tena.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  if(!data || data.length===0){
+    errEl.textContent = 'Namba ya simu au PIN si sahihi.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  session = { phone, pin, vendor: data[0] };
+  sessionStorage.setItem('eck_vendor_session', JSON.stringify(session));
+  showDashboard();
+}
+
+function logout(){
+  session = null;
+  sessionStorage.removeItem('eck_vendor_session');
+  document.getElementById('dashboard').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'flex';
+}
+
+async function showDashboard(){
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'block';
+  await loadCategories();
+
+  const v = session.vendor;
+  document.getElementById('shopName').textContent = v.business_name;
+  document.getElementById('shopCat').textContent = v.full_name;
+
+  const pill = document.getElementById('statusPill');
+  const labelMap = {active:'Duka Hai', expired:'Muda wa Ada Umeisha', suspended:'Umesimamishwa', pending:'Unasubiri Idhini'};
+  pill.textContent = labelMap[v.status] || v.status;
+  pill.className = 'status-pill ' + v.status;
+
+  document.getElementById('expiryNote').textContent = v.subscription_expires_at
+    ? 'Ada inaisha: ' + v.subscription_expires_at : '';
+
+  const suspendedNote = document.getElementById('suspendedNote');
+  const productsSection = document.getElementById('productsSection');
+  const fab = document.querySelector('.fab');
+
+  if(v.status !== 'active'){
+    suspendedNote.style.display = 'block';
+    productsSection.style.display = 'none';
+    fab.style.display = 'none';
+    return;
+  } else {
+    suspendedNote.style.display = 'none';
+    productsSection.style.display = 'block';
+    fab.style.display = 'block';
+  }
+
+  await loadProducts();
+}
+
+async function loadProducts(){
+  const listEl = document.getElementById('productsList');
+  listEl.innerHTML = '<div class="empty">Inapakia…</div>';
+
+  const { data, error } = await sb.rpc('vendor_list_my_products', { p_phone: session.phone, p_pin: session.pin });
+
+  if(error){
+    listEl.innerHTML = '<div class="empty">Tatizo la muunganiko. Jaribu tena.</div>';
+    return;
+  }
+
+  if(!data || data.length===0){
+    listEl.innerHTML = '<div class="empty"><div class="big">📦</div>Huna bidhaa bado. Bofya "Ongeza Bidhaa" kuanza.</div>';
+    return;
+  }
+
+  listEl.innerHTML = data.map(p=>`
+    <div class="pcard">
+      <div class="ph" ${p.image_url ? `onclick='openImageZoom(${JSON.stringify((p.image_urls && p.image_urls.length ? p.image_urls : [p.image_url])).replace(/'/g,"&#39;")}, ${JSON.stringify(p.name||"").replace(/'/g,"&#39;")})' style="background-image:url('${p.image_url}');background-size:cover;background-position:center;cursor:zoom-in;"` : ''}>${p.image_url ? '' : '🏷️'}</div>
+      <div class="info">
+        <div class="pname">${p.name}</div>
+        <div class="pprice">Tsh ${Number(p.price).toLocaleString()}</div>
+        <div class="pdesc">${p.description || ''}</div>
+        <div class="pactions">
+          <button class="mini-btn stock ${p.in_stock ? '' : 'out'}" onclick="toggleStock('${p.id}', ${p.in_stock}, '${escapeStr(p.name)}', '${escapeStr(p.description||'')}', ${p.price})">
+            ${p.in_stock ? 'Ipo Stoo' : 'Imeisha'}
+          </button>
+          <button class="mini-btn del" onclick="deleteProduct('${p.id}')">Futa</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function escapeStr(s){ return String(s).replace(/'/g, "\\'"); }
+
+let bulkFileList = [];
+
+function openBulkSheet(){
+  bulkFileList = [];
+  document.getElementById('bulk_files').value = '';
+  document.getElementById('bulkList').innerHTML = '';
+  document.getElementById('bulkActions').style.display = 'none';
+  document.getElementById('bulkProgress').style.display = 'none';
+  document.getElementById('bulkOverlay').classList.add('show');
+}
+function closeBulkSheet(){ document.getElementById('bulkOverlay').classList.remove('show'); }
+
+function currentSubcatOptions(){
+  const cat = categories.find(c=>c.id===session.vendor.category_id);
+  return cat ? (SUBCATS[cat.slug] || []) : [];
+}
+
+function handleBulkFiles(){
+  const input = document.getElementById('bulk_files');
+  const files = Array.from(input.files).slice(0, 200);
+  bulkFileList = files.map(f=>({ file:f, name:'', price:'', subcategory: (currentSubcatOptions()[0]||''), status:null }));
+  renderBulkList();
+}
+
+function renderBulkList(){
+  const wrap = document.getElementById('bulkList');
+  const actions = document.getElementById('bulkActions');
+
+  if(bulkFileList.length===0){
+    wrap.innerHTML = '';
+    actions.style.display = 'none';
+    return;
+  }
+
+  const opts = currentSubcatOptions();
+  const countLabel = `<div class="bulk-count">${bulkFileList.length} picha zimechaguliwa</div>`;
+
+  wrap.innerHTML = countLabel + bulkFileList.map((item, i)=>{
+    const url = URL.createObjectURL(item.file);
+    const subcatSelect = opts.length
+      ? `<select onchange="updateBulkField(${i},'subcategory',this.value)">${opts.map(o=>`<option value="${o}" ${item.subcategory===o?'selected':''}>${o}</option>`).join('')}</select>`
+      : '';
+    const statusHtml = item.status==='ok' ? `<div class="bstatus ok">✓ Imehifadhiwa</div>`
+      : item.status==='fail' ? `<div class="bstatus fail">✗ Imeshindikana</div>` : '';
+    return `
+      <div class="bulk-item">
+        <img class="bthumb" src="${url}">
+        <div class="bfields">
+          <input type="text" placeholder="Jina la bidhaa" value="${item.name}" oninput="updateBulkField(${i},'name',this.value)">
+          <div class="brow">
+            <input type="number" placeholder="Bei (Tsh)" value="${item.price}" oninput="updateBulkField(${i},'price',this.value)">
+            ${subcatSelect}
+          </div>
+          ${statusHtml}
+        </div>
+      </div>`;
+  }).join('');
+
+  actions.style.display = 'flex';
+}
+
+function updateBulkField(index, field, value){
+  bulkFileList[index][field] = value;
+}
+
+async function saveBulkProducts(){
+  const missing = bulkFileList.filter(item => !item.name.trim() || !item.price);
+  if(missing.length){
+    showToast('Jaza jina na bei kwa kila bidhaa kabla ya kuhifadhi.');
+    return;
+  }
+
+  const progressEl = document.getElementById('bulkProgress');
+  progressEl.style.display = 'block';
+  document.getElementById('bulkActions').style.display = 'none';
+
+  let done = 0, failed = 0;
+
+  for(let i=0; i<bulkFileList.length; i++){
+    const item = bulkFileList[i];
+    progressEl.textContent = `Inahifadhi ${i+1} kati ya ${bulkFileList.length}…`;
+
+    try{
+      const ext = item.file.name.split('.').pop();
+      const path = `${session.vendor.id}/${Date.now()}_${i}.${ext}`;
+      let imageUrl = null;
+      const { error: uploadErr } = await sb.storage.from('eck-market-media').upload(path, item.file);
+      if(!uploadErr){
+        const { data: pub } = sb.storage.from('eck-market-media').getPublicUrl(path);
+        imageUrl = pub.publicUrl;
+      }
+
+      const { error } = await sb.rpc('vendor_add_product', {
+        p_phone: session.phone, p_pin: session.pin,
+        p_name: item.name, p_description: '', p_price: parseFloat(item.price),
+        p_image_url: imageUrl, p_subcategory: item.subcategory || null
+      });
+
+      item.status = error ? 'fail' : 'ok';
+      if(error) failed++; else done++;
+    } catch(e){
+      item.status = 'fail';
+      failed++;
+    }
+    renderBulkList();
+  }
+
+  progressEl.textContent = `Imekamilika: ${done} zimehifadhiwa${failed ? `, ${failed} zimeshindikana` : ''}.`;
+  showToast(`Bidhaa ${done} zimeongezwa kwenye duka lako!`);
+  await loadProducts();
+
+  setTimeout(()=>{ closeBulkSheet(); }, 1800);
+}
+
+function openAddSheet(){
+  document.getElementById('sheetTitle').textContent = 'Ongeza Bidhaa';
+  document.getElementById('p_name').value = '';
+  document.getElementById('p_desc').value = '';
+  document.getElementById('p_price').value = '';
+
+  const cat = categories.find(c=>c.id===session.vendor.category_id);
+  const subcatField = document.getElementById('subcatField');
+  const subcatSelect = document.getElementById('p_subcat');
+  const opts = cat ? (SUBCATS[cat.slug] || []) : [];
+
+  if(opts.length){
+    subcatField.style.display = 'block';
+    subcatSelect.innerHTML = opts.map(o=>`<option value="${o}">${o}</option>`).join('');
+  } else {
+    subcatField.style.display = 'none';
+  }
+
+  document.getElementById('overlay').classList.add('show');
+}
+function closeAddSheet(){ document.getElementById('overlay').classList.remove('show'); }
+
+async function saveProduct(){
+  const name = document.getElementById('p_name').value.trim();
+  const desc = document.getElementById('p_desc').value.trim();
+  const price = parseFloat(document.getElementById('p_price').value);
+  const fileInput = document.getElementById('p_image');
+  const files = Array.from(fileInput.files).slice(0, 6);
+
+  if(!name || !price){
+    showToast('Jaza jina na bei ya bidhaa.');
+    return;
+  }
+
+  let imageUrls = [];
+  if(files.length){
+    showToast(`Inapakia picha… (0/${files.length})`);
+    for(let i=0; i<files.length; i++){
+      const file = files[i];
+      const ext = file.name.split('.').pop();
+      const path = `${session.vendor.id}/${Date.now()}_${i}.${ext}`;
+      const { error: uploadErr } = await sb.storage.from('eck-market-media').upload(path, file);
+      if(!uploadErr){
+        const { data: pub } = sb.storage.from('eck-market-media').getPublicUrl(path);
+        imageUrls.push(pub.publicUrl);
+      }
+      showToast(`Inapakia picha… (${i+1}/${files.length})`);
+    }
+    if(imageUrls.length === 0){
+      showToast('Imeshindikana kupakia picha. Bidhaa itahifadhiwa bila picha.');
+    }
+  }
+
+  const cat = categories.find(c=>c.id===session.vendor.category_id);
+  const subcategory = (cat && SUBCATS[cat.slug]) ? document.getElementById('p_subcat').value : null;
+
+  const { error } = await sb.rpc('vendor_add_product', {
+    p_phone: session.phone, p_pin: session.pin,
+    p_name: name, p_description: desc, p_price: price,
+    p_image_url: imageUrls[0] || null, p_subcategory: subcategory,
+    p_image_urls: imageUrls
+  });
+
+  if(error){
+    showToast('Imeshindikana kuhifadhi. Jaribu tena.');
+    return;
+  }
+
+  showToast('Bidhaa imeongezwa!');
+  closeAddSheet();
+  await loadProducts();
+}
+
+async function toggleStock(id, currentInStock, name, desc, price){
+  const { error } = await sb.rpc('vendor_update_product', {
+    p_phone: session.phone, p_pin: session.pin,
+    p_product_id: id, p_name: name, p_description: desc, p_price: price,
+    p_in_stock: !currentInStock
+  });
+  if(error){ showToast('Imeshindikana kubadilisha.'); return; }
+  await loadProducts();
+}
+
+async function deleteProduct(id){
+  if(!confirm('Una uhakika unataka kufuta bidhaa hii?')) return;
+  const { error } = await sb.rpc('vendor_delete_product', { p_phone: session.phone, p_pin: session.pin, p_product_id: id });
+  if(error){ showToast('Imeshindikana kufuta.'); return; }
+  showToast('Bidhaa imefutwa.');
+  await loadProducts();
+}
+
+(function init(){
+  const saved = sessionStorage.getItem('eck_vendor_session');
+  if(saved){
+    session = JSON.parse(saved);
+    showDashboard();
+  }
+})();
+</script>
+</body>
+</html>
